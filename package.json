@@ -1,0 +1,30 @@
+{
+  "name": "msw",
+  "version": "0.1.0",
+  "description": "Provider switch CLI for Claude Code, Codex, and OpenCode.",
+  "type": "module",
+  "bin": {
+    "msw": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "dev": "tsx src/cli.ts"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "comment-json": "^4.2.5",
+    "smol-toml": "^1.4.2",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.14",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9"
+  }
+}
