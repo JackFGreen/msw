@@ -2,11 +2,11 @@
 
 `msw` 用来统一管理 Claude Code、Codex、OpenCode 的 provider 配置。
 
-Provider 保存在 `~/.msw/config.jsonc`。API key 只保存在这个文件里；写入各 agent 配置时只写环境变量引用。
+Provider 保存在 `~/.msw/config.jsonc`。API key 只保存在这个文件里；写入各 agent 配置时只写环境变量名或引用，不写明文 key。
 
 ## 安装
 
-开发使用：
+开发运行：
 
 ```sh
 pnpm install
@@ -19,17 +19,12 @@ pnpm dev -- --help
 pnpm install
 pnpm build
 pnpm link --global
-```
-
-确认命令可用：
-
-```sh
 msw --help
 ```
 
-## 第一步：添加 Provider
+## 快速开始
 
-示例添加 OpenRouter：
+添加 OpenRouter：
 
 ```sh
 msw add openrouter \
@@ -39,15 +34,67 @@ msw add openrouter \
   --name OpenRouter
 ```
 
-配置会写入：
+切换 agent：
+
+```sh
+msw switch codex openrouter
+msw switch claude openrouter
+
+msw sync opencode
+msw switch opencode openrouter
+```
+
+让当前 shell 加载运行时变量：
+
+```sh
+eval "$(msw env codex)"
+eval "$(msw env claude)"
+eval "$(msw env opencode)"
+```
+
+之后直接启动 agent：
+
+```sh
+codex
+claude
+opencode
+```
+
+## Shell 自动加载
+
+如果希望新 shell 自动可用，把下面内容加入 `~/.zshrc`：
+
+```sh
+# --- msw runtime env ---
+if command -v msw >/dev/null 2>&1; then
+  eval "$(msw env opencode)"
+  eval "$(msw env claude)"
+  eval "$(msw env codex)"
+fi
+# --- msw runtime env ---
+```
+
+修改后重启当前 shell：
+
+```sh
+exec zsh
+```
+
+说明：
+
+- `msw env claude` 导出 `ANTHROPIC_*`。
+- `msw env codex` 导出 `MSW_CODEX_API_KEY` 和 `CODEX_MODEL`。
+- `msw env opencode` 导出 `MSW_OPENCODE_<PROVIDER_ID>_API_KEY`。
+
+## 配置文件
+
+主配置文件：
 
 ```text
 ~/.msw/config.jsonc
 ```
 
-该文件支持注释，也会保存明文 API key。
-
-配置结构示例：
+示例：
 
 ```jsonc
 {
@@ -60,101 +107,43 @@ msw add openrouter \
       "defaultModel": "openai/gpt-4o",
       "models": {
         "openai/gpt-4o": {
-          "name": "openai/gpt-4o",
-        },
-      },
-    },
+          "name": "openai/gpt-4o"
+        }
+      }
+    }
   },
-  "active": {},
+  "active": {
+    "codex": {
+      "provider": "openrouter",
+      "model": "openai/gpt-4o"
+    }
+  }
 }
 ```
 
-查看 provider：
+Provider 可为不同 agent 设置不同 baseURL，例如 Claude 使用 Anthropic-compatible 端点，Codex/OpenCode 使用 OpenAI-compatible 端点：
 
-```sh
-msw list
+```jsonc
+{
+  "baseURL": "https://token-plan-sgp.xiaomimimo.com/v1",
+  "baseURLs": {
+    "claude": "https://token-plan-sgp.xiaomimimo.com/anthropic"
+  }
+}
 ```
 
-## 第二步：让 Shell 加载 API Key
+## 命令
 
-`msw switch` 只切换 agent 配置，不会把 API key 明文写进 agent 配置。agent 真正运行时，需要 shell 里有对应 `MSW_*` 环境变量。
-
-推荐把需要的 env 写入 `~/.zshrc`：
-
-```sh
-eval "$(msw env claude)"
-eval "$(msw env codex)"
-eval "$(msw env opencode)"
-```
-
-修改后打开新 shell，或在当前 shell 执行：
-
-```sh
-source ~/.zshrc
-```
-
-检查某个 agent 会导出什么：
-
-```sh
-msw env opencode
-```
-
-## 第三步：切换 Agent
-
-切换 Codex：
-
-```sh
-msw switch codex openrouter
-```
-
-这会更新：
-
-```text
-~/.msw/config.jsonc
-~/.codex/config.toml
-```
-
-切换 Claude Code：
-
-```sh
-msw switch claude openrouter
-```
-
-Claude Code 的 `settings.json.env` 不支持展开 `$VAR`。因此 Claude 不在 settings 中引用 `MSW_*`，而是由 `msw env claude` 直接导出：
-
-```text
-ANTHROPIC_BASE_URL
-ANTHROPIC_AUTH_TOKEN
-ANTHROPIC_MODEL
-ANTHROPIC_DEFAULT_SONNET_MODEL
-ANTHROPIC_DEFAULT_OPUS_MODEL
-ANTHROPIC_DEFAULT_HAIKU_MODEL
-```
-
-切换 OpenCode 前，先同步 provider 列表：
-
-```sh
-msw sync opencode
-msw switch opencode openrouter
-```
-
-`sync opencode` 会把 `~/.msw/config.jsonc` 里的所有 provider 同步到：
-
-```text
-~/.config/opencode/opencode.json
-```
-
-`switch opencode` 只更新 OpenCode 当前 active model，例如：
-
-```json
-"model": "openrouter/openai/gpt-4o"
-```
-
-## 常用命令
+查看状态：
 
 ```sh
 msw list
 msw status
+```
+
+删除 provider：
+
+```sh
 msw delete openrouter
 msw delete openrouter --force
 ```
@@ -165,7 +154,34 @@ msw delete openrouter --force
 msw switch codex openrouter --model openai/gpt-4o
 ```
 
-## 恢复 Agent 原始配置
+OpenCode 的 provider 列表同步和 active 切换是两个动作：
+
+```sh
+msw sync opencode
+msw switch opencode openrouter
+```
+
+## Agent 行为
+
+Claude Code：
+
+- `msw switch claude <provider>` 更新 `~/.msw/config.jsonc` 的 `active.claude`。
+- 同时清理 `~/.claude/settings.json.env` 中的 `ANTHROPIC_*` 字段，避免 settings 覆盖 shell env。
+- Claude Code 不支持在 `settings.json.env` 中展开 `$VAR`，所以运行时变量由 `msw env claude` 直接导出。
+
+Codex：
+
+- `msw switch codex <provider>` 更新 `~/.codex/config.toml`。
+- 写入 `model_provider`、`model` 和 `[model_providers.<id>]`。
+- 写入 `env_key = "MSW_CODEX_API_KEY"`，不写 API key 明文。
+
+OpenCode：
+
+- `msw sync opencode` 把 `~/.msw/config.jsonc` 中所有 provider 同步到 `~/.config/opencode/opencode.json`。
+- `msw switch opencode <provider>` 只更新 OpenCode 当前 active model，例如 `"model": "openrouter/openai/gpt-4o"`。
+- provider key 使用 `{env:MSW_OPENCODE_<PROVIDER_ID>_API_KEY}`。
+
+## 恢复原始配置
 
 恢复某个 agent 到第一次被 `msw` 修改前的配置：
 
@@ -177,46 +193,36 @@ msw switch opencode origin
 
 恢复后，`msw` 会清理 `~/.msw/config.jsonc` 中对应的 `active.<agent>`。
 
-第一次修改某个 agent 配置前，`msw` 会把原始配置保存两份：
+恢复查找顺序：
+
+1. 优先使用 agent 配置同目录下的固定 bak 文件。
+2. 如果同目录 bak 不存在，再使用 `~/.msw/backups/<agent>/` 下的固定 bak 文件。
+
+固定 bak 路径：
 
 ```text
 ~/.codex/config.msw-bak.toml
 ~/.msw/backups/codex/config.msw-bak.toml
-```
 
-Claude 和 OpenCode 对应为：
-
-```text
 ~/.claude/settings.msw-bak.json
 ~/.msw/backups/claude/settings.msw-bak.json
+
 ~/.config/opencode/opencode.msw-bak.json
 ~/.msw/backups/opencode/opencode.msw-bak.json
 ```
 
-如果你想完全禁用 shell 中的 `msw env`，需要删除或注释 `~/.zshrc` 中的 msw env 段：
+第一次修改某个 agent 配置前，`msw` 会按上面的路径保存原始配置。后续普通备份仍会写入带时间戳的文件，但不会覆盖固定 bak。
 
-```sh
-# --- msw runtime env ---
-if command -v msw >/dev/null 2>&1; then
-  eval "$(msw env opencode)"
-  eval "$(msw env claude)"
-  eval "$(msw env codex)"
-fi
-# --- msw runtime env ---
-```
-
-然后重启当前 shell：
+如果要完全禁用 shell 中的 `msw env`，删除或注释 `~/.zshrc` 中的 msw env 段，然后执行：
 
 ```sh
 exec zsh
 ```
 
-## 直接启动 Agent
-
-只要 shell 已经加载过 `msw env`，就直接运行 agent：
+## 开发检查
 
 ```sh
-codex
-claude
-opencode
+pnpm check
+pnpm test
+pnpm build
 ```
