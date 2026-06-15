@@ -21,6 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
 
       - run: pnpm install --frozen-lockfile
 
@@ -36,4 +37,6 @@ jobs:
         with:
           generate_release_notes: true
 
-      - run: npm publish --provenance
+      - run: |
+          npm config delete //registry.npmjs.org/:_authToken
+          npm publish --provenance
