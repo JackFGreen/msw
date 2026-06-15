@@ -37,6 +37,6 @@ jobs:
         with:
           generate_release_notes: true
 
+      - run: npm install -g npm@latest
+
       - run: npm publish --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
