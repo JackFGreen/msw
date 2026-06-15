@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2](https://github.com/JackFGreen/msw/compare/msw-v0.1.1...msw-v0.1.2) (2026-06-15)
+
+
+### Bug Fixes
+
+* use npm Trusted Publishing (OIDC) instead of token ([1b576f4](https://github.com/JackFGreen/msw/commit/1b576f421a9caae7709746da55c68b2a96faa5d4))
+* use v* tag format for release-please ([c356cdc](https://github.com/JackFGreen/msw/commit/c356cdcbbb2e6fe2f02192ffce8ec8bbcade2b36))
+
 ## [0.1.1](https://github.com/JackFGreen/msw/compare/msw-v0.1.0...msw-v0.1.1) (2026-06-15)
 
 
