@@ -1,0 +1,9 @@
+# Changelog
+
+## [0.1.1](https://github.com/JackFGreen/msw/compare/msw-v0.1.0...msw-v0.1.1) (2026-06-15)
+
+
+### Bug Fixes
+
+* add permissions to release-please workflow ([070c516](https://github.com/JackFGreen/msw/commit/070c51638dc358a60b96c52d45f82f7ff730218c))
+* fix atomicWrite security issues ([58c5640](https://github.com/JackFGreen/msw/commit/58c5640178f392f2aa5325684ce9d0720ba104fa))
