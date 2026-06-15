@@ -4,7 +4,7 @@ import type { Paths } from "./paths.js";
 import { switchClaude } from "./renderers/claude.js";
 import { switchCodex } from "./renderers/codex.js";
 import { syncOpenCode, switchOpenCode } from "./renderers/opencode.js";
-import { addProvider, deleteProvider, loadConfig, requireActive, saveConfig, setActive } from "./store.js";
+import { addProvider, deleteProvider, loadConfig, saveConfig, setActive } from "./store.js";
 import type { Agent, MswConfig } from "./types.js";
 import { buildEnv, shellExports } from "./env.js";
 
@@ -16,7 +16,7 @@ export async function listProviders(paths: Paths) {
     baseURL: provider.baseURL ?? "",
     defaultModel: provider.defaultModel,
     models: Object.keys(provider.models).join(", "),
-    active: activeAgents(config, id).join(", ")
+    active: activeAgents(config, id).join(", "),
   }));
 
   if (rows.length === 0) {
@@ -34,18 +34,24 @@ export async function status(paths: Paths) {
     `codex config: ${paths.codexConfig}`,
     `opencode config: ${paths.opencodeConfig}`,
     "",
-    "active:"
+    "active:",
   ];
 
   for (const agent of ["claude", "codex", "opencode"] as const) {
     const selection = config.active[agent];
-    lines.push(selection ? `  ${agent}: ${selection.provider}/${selection.model}` : `  ${agent}: <none>`);
+    lines.push(
+      selection ? `  ${agent}: ${selection.provider}/${selection.model}` : `  ${agent}: <none>`
+    );
   }
 
   return lines.join("\n");
 }
 
-export async function add(paths: Paths, id: string, options: { name?: string; baseUrl: string; apiKey: string; model: string }) {
+export async function add(
+  paths: Paths,
+  id: string,
+  options: { name?: string; baseUrl: string; apiKey: string; model: string }
+) {
   const config = await loadConfig(paths.mswConfig);
   await saveConfig(
     paths.mswConfig,
@@ -54,7 +60,7 @@ export async function add(paths: Paths, id: string, options: { name?: string; ba
       name: options.name,
       baseURL: options.baseUrl,
       apiKey: options.apiKey,
-      model: options.model
+      model: options.model,
     })
   );
 }
@@ -64,7 +70,12 @@ export async function remove(paths: Paths, id: string, options: { force?: boolea
   await saveConfig(paths.mswConfig, deleteProvider(config, id, Boolean(options.force)));
 }
 
-export async function switchAgent(paths: Paths, agent: Agent, provider: string, options: { model?: string }) {
+export async function switchAgent(
+  paths: Paths,
+  agent: Agent,
+  provider: string,
+  options: { model?: string }
+) {
   if (provider === "origin") {
     await restoreAgentOrigin(paths, agent);
     const config = await loadConfig(paths.mswConfig);
@@ -79,7 +90,7 @@ export async function switchAgent(paths: Paths, agent: Agent, provider: string, 
 
   switch (agent) {
     case "claude":
-      await switchClaude(paths, config);
+      await switchClaude(paths);
       return;
     case "codex":
       await switchCodex(paths, config);
@@ -137,12 +148,15 @@ function table(rows: Array<Record<string, string>>, columns: string[]) {
   const widths = Object.fromEntries(
     columns.map((column) => [
       column,
-      Math.max(column.length, ...rows.map((row) => String(row[column] ?? "").length))
+      Math.max(column.length, ...rows.map((row) => String(row[column] ?? "").length)),
     ])
   );
 
   const formatRow = (row: Record<string, string>) =>
     columns.map((column) => String(row[column] ?? "").padEnd(widths[column])).join("  ");
 
-  return [formatRow(Object.fromEntries(columns.map((column) => [column, column]))), ...rows.map(formatRow)].join("\n");
+  return [
+    formatRow(Object.fromEntries(columns.map((column) => [column, column]))),
+    ...rows.map(formatRow),
+  ].join("\n");
 }

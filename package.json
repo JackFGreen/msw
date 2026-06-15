@@ -15,7 +15,16 @@
     "check": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "dev": "tsx src/cli.ts",
+    "lint": "eslint src",
+    "format": "prettier --write src",
+    "prepare": "husky",
     "prepublishOnly": "pnpm run build && pnpm run test"
+  },
+  "lint-staged": {
+    "src/**/*.ts": [
+      "prettier --write",
+      "eslint --fix"
+    ]
   },
   "publishConfig": {
     "access": "public"
@@ -30,9 +39,18 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^22.13.14",
+    "@typescript-eslint/eslint-plugin": "^8.61.0",
+    "@typescript-eslint/parser": "^8.61.0",
+    "eslint": "^10.5.0",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.7",
+    "prettier": "^3.8.4",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.61.0",
     "vitest": "^2.1.9"
   }
 }

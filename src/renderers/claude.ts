@@ -1,9 +1,8 @@
 import { backupFile } from "../backup.js";
 import type { Paths } from "../paths.js";
-import type { MswConfig } from "../types.js";
 import { readJsonObject, writeJsonObject } from "./common.js";
 
-export async function switchClaude(paths: Paths, _config: MswConfig) {
+export async function switchClaude(paths: Paths) {
   await backupFile(paths.claudeSettings, paths.backupDir, "claude");
   const settings = await readJsonObject(paths.claudeSettings);
   const env = asObject(settings.env);
