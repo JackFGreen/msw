@@ -38,5 +38,10 @@ jobs:
           generate_release_notes: true
 
       - run: |
+          echo "npm: $(npm --version)"
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL set: ${ACTIONS_ID_TOKEN_REQUEST_URL:+yes}"
+          echo "NODE_AUTH_TOKEN set: ${NODE_AUTH_TOKEN:+yes}"
+          cat "${NPM_CONFIG_USERCONFIG}" 2>/dev/null && echo "---npmrc above---"
+          unset NODE_AUTH_TOKEN
           npm config delete //registry.npmjs.org/:_authToken
-          npm publish --provenance
+          npm publish --provenance --loglevel verbose
