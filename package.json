@@ -27,6 +27,10 @@
       "eslint --fix"
     ]
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JackFGreen/msw.git"
+  },
   "publishConfig": {
     "access": "public"
   },
