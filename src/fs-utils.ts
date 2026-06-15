@@ -12,11 +12,16 @@ export async function pathExists(filePath: string) {
 
 export async function atomicWrite(filePath: string, content: string, mode?: number) {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
-  const tempPath = path.join(path.dirname(filePath), `.${path.basename(filePath)}.${process.pid}.tmp`);
+  const tempPath = path.join(
+    path.dirname(filePath),
+    `.${path.basename(filePath)}.${process.pid}.tmp`
+  );
   await fs.writeFile(tempPath, content, { mode });
-  await fs.rename(tempPath, filePath);
-  if (mode !== undefined) {
-    await fs.chmod(filePath, mode);
+  try {
+    await fs.rename(tempPath, filePath);
+  } catch (err) {
+    await fs.unlink(tempPath).catch(() => {});
+    throw err;
   }
 }
 
