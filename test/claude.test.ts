@@ -21,18 +21,16 @@ describe("claude renderer", () => {
           ANTHROPIC_MODEL: "stale-model",
           ANTHROPIC_DEFAULT_SONNET_MODEL: "stale-sonnet",
           ANTHROPIC_DEFAULT_OPUS_MODEL: "stale-opus",
-          ANTHROPIC_DEFAULT_HAIKU_MODEL: "stale-haiku"
-        }
+          ANTHROPIC_DEFAULT_HAIKU_MODEL: "stale-haiku",
+        },
       })
     );
 
-    await switchClaude(paths, {
-      version: 1,
-      providers: {},
-      active: {}
-    });
+    await switchClaude(paths);
 
-    const settings = parse(await fs.readFile(paths.claudeSettings, "utf8")) as any;
+    const settings = parse(await fs.readFile(paths.claudeSettings, "utf8")) as unknown as {
+      env: Record<string, string | undefined>;
+    };
     expect(settings.env.FOO).toBe("bar");
     expect(settings.env.ANTHROPIC_BASE_URL).toBeUndefined();
     expect(settings.env.ANTHROPIC_AUTH_TOKEN).toBeUndefined();

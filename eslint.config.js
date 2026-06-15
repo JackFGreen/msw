@@ -5,9 +5,19 @@ import prettierConfig from "eslint-config-prettier";
 
 export default tseslint.config(
   eslint.configs.recommended,
-  ...tseslint.configs.recommended,
+  ...tseslint.configs.recommendedTypeChecked,
   prettierConfig,
   {
-    ignores: ["dist/**", "node_modules/**"],
+    languageOptions: {
+      parserOptions: {
+        projectService: {
+          allowDefaultProject: ["test/*.ts"],
+        },
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+  },
+  {
+    ignores: ["dist/**", "node_modules/**", "eslint.config.js"],
   }
 );

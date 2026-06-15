@@ -48,10 +48,15 @@ program
   .requiredOption("--model <model>", "Default model")
   .option("--name <name>", "Display name")
   .description("Add a provider.")
-  .action(async (id, options) => {
-    await add(paths, id, options);
-    console.log(`Added provider ${id}.`);
-  });
+  .action(
+    async (
+      id: string,
+      options: { name?: string; baseUrl: string; apiKey: string; model: string }
+    ) => {
+      await add(paths, id, options);
+      console.log(`Added provider ${id}.`);
+    }
+  );
 
 program
   .command("delete")
@@ -59,7 +64,7 @@ program
   .argument("<id>")
   .option("--force", "Delete even if active")
   .description("Delete a provider.")
-  .action(async (id, options) => {
+  .action(async (id: string, options: { force?: boolean }) => {
     await remove(paths, id, options);
     console.log(`Deleted provider ${id}.`);
   });
@@ -70,7 +75,7 @@ program
   .argument("<provider>")
   .option("--model <model>", "Override model for this agent")
   .description("Switch an agent to a provider.")
-  .action(async (agentValue, provider, options) => {
+  .action(async (agentValue: string, provider: string, options: { model?: string }) => {
     await switchAgent(paths, assertAgent(agentValue), provider, options);
     console.log(`Switched ${agentValue} to ${provider}.`);
   });
@@ -79,7 +84,7 @@ program
   .command("sync")
   .argument("<agent>", "currently only opencode")
   .description("Sync agent config from all msw providers.")
-  .action(async (agentValue) => {
+  .action(async (agentValue: string) => {
     const agent = assertAgent(agentValue);
     await syncAgent(paths, agent);
     console.log(`Synced ${agent}.`);
@@ -91,7 +96,7 @@ program
   .argument("[provider]")
   .option("--model <model>", "Override model")
   .description("Print shell exports for an agent.")
-  .action(async (agentValue, provider, options) => {
+  .action(async (agentValue: string, provider: string | undefined, options: { model?: string }) => {
     console.log(await envOutput(paths, assertAgent(agentValue), provider, options));
   });
 

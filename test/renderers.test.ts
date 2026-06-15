@@ -24,9 +24,9 @@ const config: MswConfig = {
       defaultModel: "gpt-hot",
       models: {
         "gpt-hot": {
-          name: "gpt-hot"
-        }
-      }
+          name: "gpt-hot",
+        },
+      },
     },
     cold: {
       name: "Cold",
@@ -35,12 +35,12 @@ const config: MswConfig = {
       defaultModel: "gpt-cold",
       models: {
         "gpt-cold": {
-          name: "gpt-cold"
+          name: "gpt-cold",
         },
         "gpt-cold-mini": {
-          name: "gpt-cold-mini"
-        }
-      }
+          name: "gpt-cold-mini",
+        },
+      },
     },
     "moonshotai-cn": {
       name: "Kimi",
@@ -49,21 +49,21 @@ const config: MswConfig = {
       defaultModel: "kimi-k2",
       models: {
         "kimi-k2": {
-          name: "kimi-k2"
-        }
-      }
-    }
+          name: "kimi-k2",
+        },
+      },
+    },
   },
   active: {
     codex: {
       provider: "hot",
-      model: "gpt-hot"
+      model: "gpt-hot",
     },
     opencode: {
       provider: "cold",
-      model: "gpt-cold"
-    }
-  }
+      model: "gpt-cold",
+    },
+  },
 };
 
 describe("renderers", () => {
@@ -75,7 +75,12 @@ describe("renderers", () => {
     await switchCodex(paths, config);
 
     const raw = await fs.readFile(paths.codexConfig, "utf8");
-    const parsed = parseToml(raw) as any;
+    const parsed = parseToml(raw) as {
+      approval_policy: string;
+      model_provider: string;
+      model: string;
+      model_providers: Record<string, { env_key: string }>;
+    };
     expect(parsed.approval_policy).toBe("never");
     expect(parsed.model_provider).toBe("hot");
     expect(parsed.model).toBe("gpt-hot");
@@ -93,18 +98,28 @@ describe("renderers", () => {
         provider: {
           external: {
             options: {
-              apiKey: "external"
-            }
-          }
-        }
+              apiKey: "external",
+            },
+          },
+        },
       })
     );
 
     await syncOpenCode(paths, config);
 
     const raw = await fs.readFile(paths.opencodeConfig, "utf8");
-    const parsed = parseJson(raw) as any;
-    expect(Object.keys(parsed.provider).sort()).toEqual(["cold", "external", "hot", "moonshotai-cn"]);
+    const parsed = parseJson(raw) as unknown as {
+      provider: Record<
+        string,
+        { options: { apiKey: string }; models: Record<string, { name: string }> }
+      >;
+    };
+    expect(Object.keys(parsed.provider).sort()).toEqual([
+      "cold",
+      "external",
+      "hot",
+      "moonshotai-cn",
+    ]);
     expect(parsed.provider.external.options.apiKey).toBe("external");
     expect(parsed.provider.hot.options.apiKey).toBe("{env:MSW_OPENCODE_HOT_API_KEY}");
     expect(parsed.provider.cold.models["gpt-cold"].name).toBe("gpt-cold");
@@ -120,8 +135,12 @@ describe("renderers", () => {
     await syncOpenCode(paths, config);
 
     const raw = await fs.readFile(paths.opencodeConfig, "utf8");
-    const parsed = parseJson(raw) as any;
-    expect(parsed.provider["moonshotai-cn"].options.apiKey).toBe("{env:MSW_OPENCODE_MOONSHOTAI_CN_API_KEY}");
+    const parsed = parseJson(raw) as unknown as {
+      provider: Record<string, { npm: string; options: { apiKey: string; baseURL: string } }>;
+    };
+    expect(parsed.provider["moonshotai-cn"].options.apiKey).toBe(
+      "{env:MSW_OPENCODE_MOONSHOTAI_CN_API_KEY}"
+    );
     expect(parsed.provider["moonshotai-cn"].npm).toBe("@ai-sdk/openai-compatible");
     expect(parsed.provider["moonshotai-cn"].options.baseURL).toBe("https://api.moonshot.cn/v1");
     expect(raw).not.toContain("kimi-secret");
@@ -135,15 +154,17 @@ describe("renderers", () => {
       JSON.stringify({
         provider: {
           cold: {
-            options: {}
-          }
-        }
+            options: {},
+          },
+        },
       })
     );
 
     await switchOpenCode(paths, config);
 
-    const parsed = parseJson(await fs.readFile(paths.opencodeConfig, "utf8")) as any;
+    const parsed = parseJson(await fs.readFile(paths.opencodeConfig, "utf8")) as unknown as {
+      model: string;
+    };
     expect(parsed.model).toBe("cold/gpt-cold");
   });
 });

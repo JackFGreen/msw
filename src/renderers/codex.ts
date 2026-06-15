@@ -42,7 +42,7 @@ async function readTomlObject(filePath: string): Promise<TomlObject> {
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       throw new MswError(`${filePath} must contain a TOML object`);
     }
-    return parsed as TomlObject;
+    return parsed;
   } catch (error) {
     if (error instanceof MswError) throw error;
     throw new MswError(

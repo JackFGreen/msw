@@ -8,7 +8,7 @@ import type { Agent, MswConfig } from "./types.js";
 const defaultConfig: MswConfig = {
   version: 1,
   providers: {},
-  active: {}
+  active: {},
 };
 
 export async function loadConfig(configPath: string): Promise<MswConfig> {
@@ -25,7 +25,7 @@ export async function loadConfig(configPath: string): Promise<MswConfig> {
 
   try {
     const parsed = parse(raw);
-    return configSchema.parse(parsed) as MswConfig;
+    return configSchema.parse(parsed);
   } catch (error) {
     throw new MswError(`invalid msw config ${configPath}: ${formatError(error)}`);
   }
@@ -54,11 +54,11 @@ export function addProvider(config: MswConfig, input: unknown): MswConfig {
         defaultModel: parsed.model,
         models: {
           [parsed.model]: {
-            name: parsed.model
-          }
-        }
-      }
-    }
+            name: parsed.model,
+          },
+        },
+      },
+    },
   };
 }
 
@@ -86,7 +86,12 @@ export function deleteProvider(config: MswConfig, id: string, force: boolean): M
   return { ...config, providers, active };
 }
 
-export function setActive(config: MswConfig, agent: Agent, provider: string, model?: string): MswConfig {
+export function setActive(
+  config: MswConfig,
+  agent: Agent,
+  provider: string,
+  model?: string
+): MswConfig {
   const selected = config.providers[provider];
   if (!selected) {
     throw new MswError(`unknown provider: ${provider}`);
@@ -98,15 +103,23 @@ export function setActive(config: MswConfig, agent: Agent, provider: string, mod
       ...config.active,
       [agent]: {
         provider,
-        model: model ?? selected.defaultModel
-      }
-    }
+        model: model ?? selected.defaultModel,
+      },
+    },
   };
 }
 
-export function requireActive(config: MswConfig, agent: Agent, providerOverride?: string, modelOverride?: string) {
+export function requireActive(
+  config: MswConfig,
+  agent: Agent,
+  providerOverride?: string,
+  modelOverride?: string
+) {
   const selection = providerOverride
-    ? { provider: providerOverride, model: modelOverride ?? config.providers[providerOverride]?.defaultModel }
+    ? {
+        provider: providerOverride,
+        model: modelOverride ?? config.providers[providerOverride]?.defaultModel,
+      }
     : config.active[agent];
 
   if (!selection?.provider || !selection.model) {
@@ -121,7 +134,7 @@ export function requireActive(config: MswConfig, agent: Agent, providerOverride?
   return {
     id: selection.provider,
     provider,
-    model: modelOverride ?? selection.model
+    model: modelOverride ?? selection.model,
   };
 }
 
