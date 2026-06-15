@@ -4,7 +4,7 @@ import { MswError } from "../errors.js";
 import type { Paths } from "../paths.js";
 import { requireActive } from "../store.js";
 import type { MswConfig, Provider } from "../types.js";
-import { readJsonObject, writeJsonObject } from "./common.js";
+import { asObject, readJsonObject, writeJsonObject } from "./common.js";
 
 export async function syncOpenCode(paths: Paths, config: MswConfig) {
   await backupFile(paths.opencodeConfig, paths.backupDir, "opencode");
@@ -13,7 +13,9 @@ export async function syncOpenCode(paths: Paths, config: MswConfig) {
 
   opencode.provider = {
     ...existingProviders,
-    ...Object.fromEntries(Object.entries(config.providers).map(([id, provider]) => [id, renderProvider(id, provider)]))
+    ...Object.fromEntries(
+      Object.entries(config.providers).map(([id, provider]) => [id, renderProvider(id, provider)])
+    ),
   };
 
   const active = config.active.opencode;
@@ -44,15 +46,8 @@ function renderProvider(id: string, provider: Provider) {
     npm: "@ai-sdk/openai-compatible",
     options: {
       baseURL: baseURLForAgent({ id, provider, model: provider.defaultModel }, "opencode"),
-      apiKey: `{env:${opencodeApiKeyEnvName(id)}}`
+      apiKey: `{env:${opencodeApiKeyEnvName(id)}}`,
     },
-    models: provider.models
+    models: provider.models,
   };
-}
-
-function asObject(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return {};
-  }
-  return value as Record<string, unknown>;
 }

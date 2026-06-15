@@ -7,6 +7,7 @@ import { atomicWrite, pathExists } from "../fs-utils.js";
 import type { Paths } from "../paths.js";
 import { requireActive } from "../store.js";
 import type { MswConfig } from "../types.js";
+import { asObject } from "./common.js";
 
 type TomlObject = Record<string, unknown>;
 
@@ -23,7 +24,7 @@ export async function switchCodex(paths: Paths, config: MswConfig) {
     ...asObject(modelProviders[selection.id]),
     name: selection.provider.name,
     base_url: baseURLForAgent(selection, "codex"),
-    env_key: "MSW_CODEX_API_KEY"
+    env_key: "MSW_CODEX_API_KEY",
   };
   codex.model_providers = modelProviders;
 
@@ -44,13 +45,8 @@ async function readTomlObject(filePath: string): Promise<TomlObject> {
     return parsed as TomlObject;
   } catch (error) {
     if (error instanceof MswError) throw error;
-    throw new MswError(`failed to parse TOML config ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
+    throw new MswError(
+      `failed to parse TOML config ${filePath}: ${error instanceof Error ? error.message : String(error)}`
+    );
   }
-}
-
-function asObject(value: unknown): TomlObject {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return {};
-  }
-  return value as TomlObject;
 }

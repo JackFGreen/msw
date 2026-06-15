@@ -1,9 +1,21 @@
 #!/usr/bin/env node
+import { createRequire } from "node:module";
 import { Command, CommanderError } from "commander";
 import { MswError } from "./errors.js";
 import { createPaths } from "./paths.js";
 import { assertAgent } from "./schema.js";
-import { add, envOutput, listProviders, remove, status, switchAgent, syncAgent } from "./commands.js";
+import {
+  add,
+  envOutput,
+  listProviders,
+  remove,
+  status,
+  switchAgent,
+  syncAgent,
+} from "./commands.js";
+
+const require = createRequire(import.meta.url);
+const pkg = require("../package.json") as { version: string };
 
 const program = new Command();
 const paths = createPaths();
@@ -11,7 +23,7 @@ const paths = createPaths();
 program
   .name("msw")
   .description("Provider switch CLI for Claude Code, Codex, and OpenCode.")
-  .version("0.1.0")
+  .version(pkg.version)
   .enablePositionalOptions();
 
 program
