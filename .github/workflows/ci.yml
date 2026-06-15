@@ -1,15 +1,14 @@
-name: Release
+name: CI
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
+  pull_request:
 
 jobs:
-  release:
+  ci:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -20,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
 
       - run: pnpm install --frozen-lockfile
 
@@ -28,14 +27,4 @@ jobs:
 
       - run: pnpm check
 
-      - run: pnpm build
-
       - run: pnpm test
-
-      - uses: softprops/action-gh-release@v2
-        with:
-          generate_release_notes: true
-
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
