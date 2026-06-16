@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.3](https://github.com/JackFGreen/msw/compare/v0.1.2...v0.1.3) (2026-06-16)
+
+
+### Bug Fixes
+
+* empty commit to trigger ci ([b363151](https://github.com/JackFGreen/msw/commit/b3631511348f596ce90711631f51262c8cab7580))
+
+
+### Reverts
+
+* restore v* tag pattern in release workflow ([b333f7f](https://github.com/JackFGreen/msw/commit/b333f7faf57bc2c850421c7c917a24cee78b543e))
+
 ## [0.1.2](https://github.com/JackFGreen/msw/compare/v0.1.1...v0.1.2) (2026-06-16)
 
 
