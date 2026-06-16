@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.2](https://github.com/JackFGreen/msw/compare/msw-v0.1.1...msw-v0.1.2) (2026-06-16)
+
+
+### Bug Fixes
+
+* add permissions to release-please workflow ([070c516](https://github.com/JackFGreen/msw/commit/070c51638dc358a60b96c52d45f82f7ff730218c))
+* add repository field for npm provenance verification ([955f1a0](https://github.com/JackFGreen/msw/commit/955f1a0dcb2911e9e03db88b985f52fa2be9ed71))
+* delete empty _authToken before publish to allow OIDC ([624807c](https://github.com/JackFGreen/msw/commit/624807cfb712d4e790e91b6b07c73bdfa28428eb))
+* fix atomicWrite security issues ([58c5640](https://github.com/JackFGreen/msw/commit/58c5640178f392f2aa5325684ce9d0720ba104fa))
+* remove registry-url to allow npm OIDC Trusted Publishing ([53b5609](https://github.com/JackFGreen/msw/commit/53b5609bb29cf547af8f46b2b2e3daaffe47b9c9))
+* silence env command when no active provider is configured ([d8cf640](https://github.com/JackFGreen/msw/commit/d8cf64074aabba103567a122531b72cbd6386591))
+* use npm Trusted Publishing (OIDC) instead of token ([1b576f4](https://github.com/JackFGreen/msw/commit/1b576f421a9caae7709746da55c68b2a96faa5d4))
+* use v* tag format for release-please ([c356cdc](https://github.com/JackFGreen/msw/commit/c356cdcbbb2e6fe2f02192ffce8ec8bbcade2b36))
+
 ## [0.1.1](https://github.com/JackFGreen/msw/compare/msw-v0.1.0...msw-v0.1.1) (2026-06-15)
 
 
