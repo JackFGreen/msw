@@ -26,7 +26,7 @@ msw --help
 
 ## 快速开始
 
-添加 OpenRouter：
+添加 provider：
 
 ```sh
 msw add openrouter \
@@ -46,29 +46,25 @@ msw sync opencode
 msw switch opencode openrouter
 ```
 
-让当前 shell 加载运行时变量：
+配置了 Shell 函数包装后，`switch` 会自动更新当前 shell 的环境变量，直接启动 agent 即可。
 
-```sh
-eval "$(msw env codex)"
-eval "$(msw env claude)"
-eval "$(msw env opencode)"
-```
+## Shell 配置
 
-之后直接启动 agent：
-
-```sh
-codex
-claude
-opencode
-```
-
-## Shell 自动加载
-
-如果希望新 shell 自动可用，把下面内容加入 `~/.zshrc`：
+推荐在 `~/.zshrc` 中添加以下内容，新 shell 自动加载环境变量，且 `msw switch` 后无需手动刷新：
 
 ```sh
 # --- msw runtime env ---
 if command -v msw >/dev/null 2>&1; then
+  # switch 后自动刷新当前 shell 的环境变量
+  msw() {
+    command msw "$@"
+    local ret=$?
+    if [[ $ret -eq 0 && "$1" == "switch" ]]; then
+      eval "$(command msw env "$2")"
+    fi
+    return $ret
+  }
+
   eval "$(msw env opencode)"
   eval "$(msw env claude)"
   eval "$(msw env codex)"
@@ -76,20 +72,19 @@ fi
 # --- msw runtime env ---
 ```
 
-修改后重启当前 shell：
+修改后重启 shell：
 
 ```sh
 exec zsh
 ```
 
-说明：
+环境变量说明：
 
-- `msw env claude` 导出 `ANTHROPIC_*`。
-- `msw env codex` 导出 `MSW_CODEX_API_KEY` 和 `CODEX_MODEL`。
-- `msw env opencode` 导出 `MSW_OPENCODE_<PROVIDER_ID>_API_KEY`。
-- `switch` 到新 provider 后，当前 shell 需要重新加载对应 agent 的 env，最轻量方式是 `eval "$(msw env <agent>)"`。
-- 如果 `.zshrc` 中已经配置了上面的自动加载，也可以 `source ~/.zshrc` 重新执行全部 `msw env`。
-- `exec zsh` 主要用于修改了 `.zshrc` 文件本身，或恢复 origin 后想重启 shell 状态。
+| agent | 导出变量 |
+|-------|---------|
+| claude | `ANTHROPIC_BASE_URL` `ANTHROPIC_AUTH_TOKEN` `ANTHROPIC_MODEL` 等 |
+| codex | `MSW_CODEX_API_KEY` `CODEX_MODEL` |
+| opencode | `MSW_OPENCODE_<PROVIDER_ID>_API_KEY` |
 
 ## 配置文件
 
@@ -139,41 +134,18 @@ Provider 可为不同 agent 设置不同 baseURL，例如 Claude 使用 Anthropi
 
 ## 命令
 
-查看状态：
-
 ```sh
-msw list
-msw status
+msw list                         # 查看 providers 和 active 状态
+msw status                       # 查看配置文件路径和 active 状态
+msw add <id> --base-url ... --api-key ... --model ...  # 添加 provider
+msw delete <id> [--force]        # 删除 provider
+msw switch <agent> <provider>    # 切换 agent 的 provider
+msw switch <agent> <provider> --model <model>  # 临时指定模型
+msw sync opencode                # 同步所有 provider 到 OpenCode
+msw env <agent>                  # 打印 shell exports（无 active provider 时静默退出）
 ```
 
-删除 provider：
-
-```sh
-msw delete openrouter
-msw delete openrouter --force
-```
-
-临时指定模型：
-
-```sh
-msw switch codex openrouter --model openai/gpt-4o
-```
-
-切换后刷新当前 shell：
-
-```sh
-msw switch claude openrouter
-eval "$(msw env claude)"
-```
-
-如果 `.zshrc` 中已经配置了自动加载，也可以重新 source：
-
-```sh
-msw switch claude openrouter
-source ~/.zshrc
-```
-
-OpenCode 的 provider 列表同步和 active 切换是两个动作：
+OpenCode 需要先 sync 再 switch：
 
 ```sh
 msw sync opencode
@@ -232,24 +204,7 @@ msw switch opencode origin
 
 第一次修改某个 agent 配置前，`msw` 会按上面的路径保存原始配置。后续普通备份仍会写入带时间戳的文件，但不会覆盖固定 bak。
 
-恢复 origin 后，当前 shell 中旧的环境变量不会自动消失。`source ~/.zshrc` 只会重新执行配置，不会 unset 已存在的变量。
-
-如果要完全禁用 shell 中的 `msw env`，删除或注释 `~/.zshrc` 中的 msw env 段，然后执行：
-
-```sh
-exec zsh
-```
-
-也可以只手动 unset 对应 agent 的变量。例如 Claude：
-
-```sh
-unset ANTHROPIC_BASE_URL
-unset ANTHROPIC_AUTH_TOKEN
-unset ANTHROPIC_MODEL
-unset ANTHROPIC_DEFAULT_SONNET_MODEL
-unset ANTHROPIC_DEFAULT_OPUS_MODEL
-unset ANTHROPIC_DEFAULT_HAIKU_MODEL
-```
+恢复 origin 后，当前 shell 中旧的环境变量不会自动消失。使用了上面的 `msw` 函数包装，`switch` 到 origin 时会自动 unset。如需手动清理，`exec zsh` 即可。
 
 ## 开发检查
 
