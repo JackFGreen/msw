@@ -135,6 +135,9 @@ export async function envOutput(
   options: { model?: string } = {}
 ) {
   const config = await loadConfig(paths.mswConfig);
+  if (!providerOverride && !config.active[agent]) {
+    return "";
+  }
   return shellExports(buildEnv(config, agent, providerOverride, options.model));
 }
 
