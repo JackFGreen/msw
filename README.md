@@ -6,25 +6,13 @@
 
 Provider 保存在 `~/.msw/config.jsonc`。API key 只保存在这个文件里；写入各 agent 配置时只写环境变量名或引用，不写明文 key。
 
-## 安装
-
-开发运行：
-
-```sh
-pnpm install
-pnpm dev -- --help
-```
-
-本机全局使用：
-
-```sh
-pnpm install
-pnpm build
-pnpm link --global
-msw --help
-```
-
 ## 快速开始
+
+安装：
+
+```sh
+pnpm install -g @jackgreen/msw
+```
 
 添加 provider：
 
@@ -46,29 +34,27 @@ msw sync opencode
 msw switch opencode openrouter
 ```
 
-配置了 Shell 函数包装后，`switch` 会自动更新当前 shell 的环境变量，直接启动 agent 即可。
+注入环境变量到当前 shell：
+
+```sh
+eval "$(msw env claude)"
+eval "$(msw env codex)"
+```
 
 ## Shell 配置
 
-推荐在 `~/.zshrc` 中添加以下内容，新 shell 自动加载环境变量，且 `msw switch` 后无需手动刷新：
+推荐在 `~/.zshrc` 中添加以下内容，新 shell 自动加载环境变量，且 `msw switch` 后无需执行 eval 环境变量：
 
 ```sh
 # --- msw runtime env ---
-if command -v msw >/dev/null 2>&1; then
-  # switch 后自动刷新当前 shell 的环境变量
-  msw() {
-    command msw "$@"
-    local ret=$?
-    if [[ $ret -eq 0 && "$1" == "switch" ]]; then
-      eval "$(command msw env "$2")"
-    fi
-    return $ret
-  }
-
-  eval "$(msw env opencode)"
-  eval "$(msw env claude)"
-  eval "$(msw env codex)"
-fi
+msw() {
+  command msw "$@"
+  local ret=$?
+  if [[ $ret -eq 0 && "$1" == "switch" ]]; then
+    eval "$(command msw env "$2")"
+  fi
+  return $ret
+}
 # --- msw runtime env ---
 ```
 
@@ -78,13 +64,18 @@ fi
 exec zsh
 ```
 
-环境变量说明：
+## 环境变量
 
-| agent | 导出变量 |
-|-------|---------|
-| claude | `ANTHROPIC_BASE_URL` `ANTHROPIC_AUTH_TOKEN` `ANTHROPIC_MODEL` 等 |
-| codex | `MSW_CODEX_API_KEY` `CODEX_MODEL` |
-| opencode | `MSW_OPENCODE_<PROVIDER_ID>_API_KEY` |
+| 环境变量                              | agent    |
+| ------------------------------------- | -------- |
+| `ANTHROPIC_BASE_URL`                  | claude   |
+| `ANTHROPIC_AUTH_TOKEN`                | claude   |
+| `ANTHROPIC_MODEL`                     | claude   |
+| `ANTHROPIC_DEFAULT_SONNET_MODEL`      | claude   |
+| `ANTHROPIC_DEFAULT_OPUS_MODEL`        | claude   |
+| `ANTHROPIC_DEFAULT_HAIKU_MODEL`       | claude   |
+| `MSW_CODEX_API_KEY`                   | codex    |
+| `MSW_OPENCODE_<PROVIDER_ID>_API_KEY`  | opencode |
 
 ## 配置文件
 
@@ -107,17 +98,17 @@ exec zsh
       "defaultModel": "openai/gpt-4o",
       "models": {
         "openai/gpt-4o": {
-          "name": "openai/gpt-4o"
-        }
-      }
-    }
+          "name": "openai/gpt-4o",
+        },
+      },
+    },
   },
   "active": {
     "codex": {
       "provider": "openrouter",
-      "model": "openai/gpt-4o"
-    }
-  }
+      "model": "openai/gpt-4o",
+    },
+  },
 }
 ```
 
@@ -125,10 +116,10 @@ Provider 可为不同 agent 设置不同 baseURL，例如 Claude 使用 Anthropi
 
 ```jsonc
 {
-  "baseURL": "https://token-plan-sgp.xiaomimimo.com/v1",
+  "baseURL": "https://openrouter.ai/api/v1",
   "baseURLs": {
-    "claude": "https://token-plan-sgp.xiaomimimo.com/anthropic"
-  }
+    "claude": "https://openrouter.ai/api/anthropic",
+  },
 }
 ```
 
@@ -206,7 +197,23 @@ msw switch opencode origin
 
 恢复 origin 后，当前 shell 中旧的环境变量不会自动消失。使用了上面的 `msw` 函数包装，`switch` 到 origin 时会自动 unset。如需手动清理，`exec zsh` 即可。
 
-## 开发检查
+## 开发
+
+```sh
+pnpm install
+pnpm dev -- --help
+```
+
+本地全局使用：
+
+```sh
+pnpm install
+pnpm build
+pnpm link --global
+msw --help
+```
+
+开发检查：
 
 ```sh
 pnpm check
