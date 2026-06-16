@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/JackFGreen/msw/compare/v0.1.3...v0.1.4) (2026-06-16)
+
+
+### Bug Fixes
+
+* remove unused CODEX_MODEL env var ([c4fa806](https://github.com/JackFGreen/msw/commit/c4fa8065e412a7a35cfce3061f35efa2d73031b3))
+
 ## [0.1.3](https://github.com/JackFGreen/msw/compare/v0.1.2...v0.1.3) (2026-06-16)
 
 
