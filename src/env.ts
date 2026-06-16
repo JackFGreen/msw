@@ -7,7 +7,12 @@ export type EnvSelection = {
   model: string;
 };
 
-export function buildEnv(config: MswConfig, agent: Agent, providerOverride?: string, modelOverride?: string) {
+export function buildEnv(
+  config: MswConfig,
+  agent: Agent,
+  providerOverride?: string,
+  modelOverride?: string
+) {
   if (agent === "opencode" && !providerOverride) {
     return buildOpenCodeAllProviderEnv(config);
   }
@@ -16,7 +21,10 @@ export function buildEnv(config: MswConfig, agent: Agent, providerOverride?: str
   return buildEnvForSelection(agent, selection);
 }
 
-export function buildEnvForSelection(agent: Agent, selection: EnvSelection): Record<string, string> {
+export function buildEnvForSelection(
+  agent: Agent,
+  selection: EnvSelection
+): Record<string, string> {
   switch (agent) {
     case "claude":
       return {
@@ -25,16 +33,15 @@ export function buildEnvForSelection(agent: Agent, selection: EnvSelection): Rec
         ANTHROPIC_MODEL: selection.model,
         ANTHROPIC_DEFAULT_SONNET_MODEL: selection.model,
         ANTHROPIC_DEFAULT_OPUS_MODEL: selection.model,
-        ANTHROPIC_DEFAULT_HAIKU_MODEL: selection.model
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: selection.model,
       };
     case "codex":
       return {
         MSW_CODEX_API_KEY: selection.provider.apiKey,
-        CODEX_MODEL: selection.model
       };
     case "opencode":
       return {
-        [opencodeApiKeyEnvName(selection.id)]: selection.provider.apiKey
+        [opencodeApiKeyEnvName(selection.id)]: selection.provider.apiKey,
       };
   }
 }
@@ -45,7 +52,10 @@ export function baseURLForAgent(selection: EnvSelection, agent: Agent) {
 
 export function buildOpenCodeAllProviderEnv(config: MswConfig) {
   return Object.fromEntries(
-    Object.entries(config.providers).map(([id, provider]) => [opencodeApiKeyEnvName(id), provider.apiKey])
+    Object.entries(config.providers).map(([id, provider]) => [
+      opencodeApiKeyEnvName(id),
+      provider.apiKey,
+    ])
   );
 }
 
