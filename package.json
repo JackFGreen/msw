@@ -31,6 +31,7 @@
     "type": "git",
     "url": "https://github.com/JackFGreen/msw.git"
   },
+  "homepage": "https://github.com/JackFGreen/msw",
   "publishConfig": {
     "access": "public"
   },

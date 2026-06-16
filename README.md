@@ -1,5 +1,7 @@
 # msw
 
+[npm](https://www.npmjs.com/package/@jackgreen/msw) | [GitHub](https://github.com/JackFGreen/msw)
+
 `msw` 用来统一管理 Claude Code、Codex、OpenCode 的 provider 配置。
 
 Provider 保存在 `~/.msw/config.jsonc`。API key 只保存在这个文件里；写入各 agent 配置时只写环境变量名或引用，不写明文 key。
