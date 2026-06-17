@@ -21,20 +21,33 @@ export function buildEnv(
   return buildEnvForSelection(agent, selection);
 }
 
+function claudeModelName(selection: EnvSelection): string {
+  const modelConfig = selection.provider.models[selection.model];
+  const context = (modelConfig as Record<string, unknown> | undefined)?.limit as
+    | Record<string, unknown>
+    | undefined;
+  if (typeof context?.context === "number" && context.context >= 1_000_000) {
+    return `${selection.model}[1m]`;
+  }
+  return selection.model;
+}
+
 export function buildEnvForSelection(
   agent: Agent,
   selection: EnvSelection
 ): Record<string, string> {
   switch (agent) {
-    case "claude":
+    case "claude": {
+      const model = claudeModelName(selection);
       return {
         ANTHROPIC_BASE_URL: baseURLForAgent(selection, "claude"),
         ANTHROPIC_AUTH_TOKEN: selection.provider.apiKey,
-        ANTHROPIC_MODEL: selection.model,
-        ANTHROPIC_DEFAULT_SONNET_MODEL: selection.model,
-        ANTHROPIC_DEFAULT_OPUS_MODEL: selection.model,
-        ANTHROPIC_DEFAULT_HAIKU_MODEL: selection.model,
+        ANTHROPIC_MODEL: model,
+        ANTHROPIC_DEFAULT_SONNET_MODEL: model,
+        ANTHROPIC_DEFAULT_OPUS_MODEL: model,
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: model,
       };
+    }
     case "codex":
       return {
         MSW_CODEX_API_KEY: selection.provider.apiKey,

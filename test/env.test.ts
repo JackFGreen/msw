@@ -9,23 +9,23 @@ const config: MswConfig = {
       name: "Hot",
       baseURL: "https://example.com/v1",
       baseURLs: {
-        claude: "https://example.com/anthropic"
+        claude: "https://example.com/anthropic",
       },
       apiKey: "secret'key",
       defaultModel: "claude-x",
       models: {
         "claude-x": {
-          name: "claude-x"
-        }
-      }
-    }
+          name: "claude-x",
+        },
+      },
+    },
   },
   active: {
     claude: {
       provider: "hot",
-      model: "claude-x"
-    }
-  }
+      model: "claude-x",
+    },
+  },
 };
 
 describe("env", () => {
@@ -36,8 +36,77 @@ describe("env", () => {
       ANTHROPIC_MODEL: "claude-x",
       ANTHROPIC_DEFAULT_SONNET_MODEL: "claude-x",
       ANTHROPIC_DEFAULT_OPUS_MODEL: "claude-x",
-      ANTHROPIC_DEFAULT_HAIKU_MODEL: "claude-x"
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: "claude-x",
     });
+  });
+
+  it("appends [1m] to claude model name when context >= 1M", () => {
+    const config1m: MswConfig = {
+      version: 1,
+      providers: {
+        mimo: {
+          name: "MiMo",
+          baseURL: "https://api.mimo.com/v1",
+          baseURLs: {
+            claude: "https://api.mimo.com/anthropic",
+          },
+          apiKey: "key",
+          defaultModel: "mimo-v2.5-pro",
+          models: {
+            "mimo-v2.5-pro": {
+              name: "mimo-v2.5-pro",
+              limit: {
+                context: 1048576,
+                output: 131072,
+              },
+            },
+          },
+        },
+      },
+      active: {
+        claude: {
+          provider: "mimo",
+          model: "mimo-v2.5-pro",
+        },
+      },
+    };
+
+    const env = buildEnv(config1m, "claude");
+    expect(env.ANTHROPIC_MODEL).toBe("mimo-v2.5-pro[1m]");
+    expect(env.ANTHROPIC_DEFAULT_SONNET_MODEL).toBe("mimo-v2.5-pro[1m]");
+    expect(env.ANTHROPIC_DEFAULT_OPUS_MODEL).toBe("mimo-v2.5-pro[1m]");
+    expect(env.ANTHROPIC_DEFAULT_HAIKU_MODEL).toBe("mimo-v2.5-pro[1m]");
+  });
+
+  it("does not append [1m] when context < 1M", () => {
+    const configSmall: MswConfig = {
+      version: 1,
+      providers: {
+        small: {
+          name: "Small",
+          baseURL: "https://api.example.com/v1",
+          apiKey: "key",
+          defaultModel: "model-x",
+          models: {
+            "model-x": {
+              name: "model-x",
+              limit: {
+                context: 200000,
+              },
+            },
+          },
+        },
+      },
+      active: {
+        claude: {
+          provider: "small",
+          model: "model-x",
+        },
+      },
+    };
+
+    const env = buildEnv(configSmall, "claude");
+    expect(env.ANTHROPIC_MODEL).toBe("model-x");
   });
 
   it("shell-quotes secrets", () => {
