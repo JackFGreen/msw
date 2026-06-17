@@ -23,10 +23,8 @@ export function buildEnv(
 
 function claudeModelName(selection: EnvSelection): string {
   const modelConfig = selection.provider.models[selection.model];
-  const context = (modelConfig as Record<string, unknown> | undefined)?.limit as
-    | Record<string, unknown>
-    | undefined;
-  if (typeof context?.context === "number" && context.context >= 1_000_000) {
+  const context = modelConfig?.limit?.context;
+  if (typeof context === "number" && context >= 1_000_000) {
     return `${selection.model}[1m]`;
   }
   return selection.model;
