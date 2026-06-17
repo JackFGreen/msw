@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/JackFGreen/msw/compare/v0.1.4...v0.2.0) (2026-06-17)
+
+
+### Features
+
+* auto-append [1m] to Claude model name when context &gt;= 1M ([061e9fc](https://github.com/JackFGreen/msw/commit/061e9fcdc4185c109acd80c8653fc8a5cf95c9e2))
+
 ## [0.1.4](https://github.com/JackFGreen/msw/compare/v0.1.3...v0.1.4) (2026-06-16)
 
 
