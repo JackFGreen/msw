@@ -123,17 +123,33 @@ Provider 可为不同 agent 设置不同 baseURL，例如 Claude 使用 Anthropi
 }
 ```
 
+Model 可配置 `limit.context` 指定上下文窗口大小。`msw env claude` 会导出带有 `[1M]` 标记的 model，Claude Code 据此判断是否启用长上下文：
+
+```jsonc
+{
+  "defaultModel": "mimo-v2.5-pro",
+  "models": {
+    "mimo-v2.5-pro": {
+      "name": "mimo-v2.5-pro",
+      "limit": {
+        "context": 1048576
+      }
+    }
+  }
+}
+```
+
 ## 命令
 
 ```sh
 msw list                         # 查看 providers 和 active 状态
 msw status                       # 查看配置文件路径和 active 状态
-msw add <id> --base-url ... --api-key ... --model ...  # 添加 provider
+msw add <id> --base-url ... --api-key ... --model ... [--name ...]  # 添加 provider
 msw delete <id> [--force]        # 删除 provider
 msw switch <agent> <provider>    # 切换 agent 的 provider
 msw switch <agent> <provider> --model <model>  # 临时指定模型
 msw sync opencode                # 同步所有 provider 到 OpenCode
-msw env <agent>                  # 打印 shell exports（无 active provider 时静默退出）
+msw env <agent> [provider] [--model <model>]  # 打印 shell exports（无 active provider 时静默退出）
 ```
 
 OpenCode 需要先 sync 再 switch：
@@ -148,8 +164,8 @@ msw switch opencode openrouter
 Claude Code：
 
 - `msw switch claude <provider>` 更新 `~/.msw/config.jsonc` 的 `active.claude`。
-- 同时清理 `~/.claude/settings.json.env` 中的 `ANTHROPIC_*` 字段，避免 settings 覆盖 shell env。
-- Claude Code 不支持在 `settings.json.env` 中展开 `$VAR`，所以运行时变量由 `msw env claude` 直接导出。
+- 同时清理 `~/.claude/settings.json` 中 `env` 字段的 `ANTHROPIC_*`，避免 settings 覆盖 shell env。
+- Claude Code 不支持在 `settings.json` 的 `env` 中展开 `$VAR`，所以运行时变量由 `msw env claude` 直接导出。
 
 Codex：
 
