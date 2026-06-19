@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/JackFGreen/msw/compare/v0.2.0...v0.2.1) (2026-06-19)
+
+
+### Bug Fixes
+
+* remove redundant `remove` alias for delete command ([3c0813b](https://github.com/JackFGreen/msw/commit/3c0813bd2cf509810e25f694da90867c15032e97))
+
 ## [0.2.0](https://github.com/JackFGreen/msw/compare/v0.1.4...v0.2.0) (2026-06-17)
 
 
