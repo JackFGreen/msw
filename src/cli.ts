@@ -60,7 +60,6 @@ program
 
 program
   .command("delete")
-  .alias("remove")
   .argument("<id>")
   .option("--force", "Delete even if active")
   .description("Delete a provider.")
