@@ -73,11 +73,20 @@ program
   .argument("<agent>", "claude, codex, or opencode")
   .argument("<provider>")
   .option("--model <model>", "Override model for this agent")
+  .option("--haiku", "Set ANTHROPIC_DEFAULT_HAIKU_MODEL (claude only)")
+  .option("--sonnet", "Set ANTHROPIC_DEFAULT_SONNET_MODEL (claude only)")
+  .option("--opus", "Set ANTHROPIC_DEFAULT_OPUS_MODEL (claude only)")
   .description("Switch an agent to a provider.")
-  .action(async (agentValue: string, provider: string, options: { model?: string }) => {
-    await switchAgent(paths, assertAgent(agentValue), provider, options);
-    console.log(`Switched ${agentValue} to ${provider}.`);
-  });
+  .action(
+    async (
+      agentValue: string,
+      provider: string,
+      options: { model?: string; haiku?: boolean; sonnet?: boolean; opus?: boolean }
+    ) => {
+      await switchAgent(paths, assertAgent(agentValue), provider, options);
+      console.log(`Switched ${agentValue} to ${provider}.`);
+    }
+  );
 
 program
   .command("sync")

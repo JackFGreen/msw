@@ -90,12 +90,16 @@ export function setActive(
   config: MswConfig,
   agent: Agent,
   provider: string,
-  model?: string
+  model?: string,
+  modelOverrides?: { haiku?: string; sonnet?: string; opus?: string }
 ): MswConfig {
   const selected = config.providers[provider];
   if (!selected) {
     throw new MswError(`unknown provider: ${provider}`);
   }
+
+  const current = config.active[agent];
+  const existingOverrides = current?.provider === provider ? current.modelOverrides : undefined;
 
   return {
     ...config,
@@ -104,6 +108,9 @@ export function setActive(
       [agent]: {
         provider,
         model: model ?? selected.defaultModel,
+        modelOverrides: modelOverrides
+          ? { ...existingOverrides, ...modelOverrides }
+          : existingOverrides,
       },
     },
   };
@@ -135,6 +142,7 @@ export function requireActive(
     id: selection.provider,
     provider,
     model: modelOverride ?? selection.model,
+    modelOverrides: config.active[agent]?.modelOverrides,
   };
 }
 

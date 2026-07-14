@@ -45,13 +45,13 @@ describe("store", () => {
         {
           version: 1,
           providers: {},
-          active: {}
+          active: {},
         },
         {
           id: "hot",
           baseURL: "https://example.com/v1",
           apiKey: "secret",
-          model: "gpt"
+          model: "gpt",
         }
       ),
       "codex",
@@ -60,5 +60,76 @@ describe("store", () => {
 
     expect(() => deleteProvider(config, "hot", false)).toThrow(/active/);
     expect(deleteProvider(config, "hot", true).providers.hot).toBeUndefined();
+  });
+
+  it("sets model overrides when provided", () => {
+    const base = addProvider(
+      {
+        version: 1,
+        providers: {},
+        active: {},
+      },
+      {
+        id: "hot",
+        baseURL: "https://example.com/v1",
+        apiKey: "secret",
+        model: "gpt",
+      }
+    );
+
+    const config = setActive(base, "claude", "hot", undefined, { haiku: "gpt-mini" });
+    expect(config.active.claude?.modelOverrides?.haiku).toBe("gpt-mini");
+    expect(config.active.claude?.modelOverrides?.sonnet).toBeUndefined();
+  });
+
+  it("merges model overrides on same provider", () => {
+    const base = addProvider(
+      {
+        version: 1,
+        providers: {},
+        active: {},
+      },
+      {
+        id: "hot",
+        baseURL: "https://example.com/v1",
+        apiKey: "secret",
+        model: "gpt",
+      }
+    );
+
+    let config = setActive(base, "claude", "hot", undefined, { haiku: "gpt-mini" });
+    config = setActive(config, "claude", "hot", undefined, { sonnet: "gpt-sonnet" });
+    expect(config.active.claude?.modelOverrides?.haiku).toBe("gpt-mini");
+    expect(config.active.claude?.modelOverrides?.sonnet).toBe("gpt-sonnet");
+  });
+
+  it("clears model overrides when switching provider", () => {
+    const base = addProvider(
+      addProvider(
+        {
+          version: 1,
+          providers: {},
+          active: {},
+        },
+        {
+          id: "hot",
+          baseURL: "https://example.com/v1",
+          apiKey: "secret",
+          model: "gpt",
+        }
+      ),
+      {
+        id: "cold",
+        baseURL: "https://cold.example.com/v1",
+        apiKey: "secret",
+        model: "claude",
+      }
+    );
+
+    let config = setActive(base, "claude", "hot", undefined, { haiku: "gpt-mini" });
+    expect(config.active.claude?.modelOverrides?.haiku).toBe("gpt-mini");
+
+    config = setActive(config, "claude", "cold");
+    expect(config.active.claude?.modelOverrides).toBeUndefined();
   });
 });

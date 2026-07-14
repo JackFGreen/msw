@@ -1,10 +1,11 @@
-import type { Agent, MswConfig, Provider } from "./types.js";
+import type { Agent, MswConfig, ModelOverrides, Provider } from "./types.js";
 import { requireActive } from "./store.js";
 
 export type EnvSelection = {
   id: string;
   provider: Provider;
   model: string;
+  modelOverrides?: ModelOverrides;
 };
 
 export function buildEnv(
@@ -37,13 +38,24 @@ export function buildEnvForSelection(
   switch (agent) {
     case "claude": {
       const model = claudeModelName(selection);
+      const overrides = selection.modelOverrides;
+      const haikuModel = overrides?.haiku
+        ? claudeModelName({ ...selection, model: overrides.haiku })
+        : model;
+      const sonnetModel = overrides?.sonnet
+        ? claudeModelName({ ...selection, model: overrides.sonnet })
+        : model;
+      const opusModel = overrides?.opus
+        ? claudeModelName({ ...selection, model: overrides.opus })
+        : model;
+
       return {
         ANTHROPIC_BASE_URL: baseURLForAgent(selection, "claude"),
         ANTHROPIC_AUTH_TOKEN: selection.provider.apiKey,
         ANTHROPIC_MODEL: model,
-        ANTHROPIC_DEFAULT_SONNET_MODEL: model,
-        ANTHROPIC_DEFAULT_OPUS_MODEL: model,
-        ANTHROPIC_DEFAULT_HAIKU_MODEL: model,
+        ANTHROPIC_DEFAULT_SONNET_MODEL: sonnetModel,
+        ANTHROPIC_DEFAULT_OPUS_MODEL: opusModel,
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: haikuModel,
       };
     }
     case "codex":

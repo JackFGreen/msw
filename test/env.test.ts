@@ -29,7 +29,7 @@ const config: MswConfig = {
 };
 
 describe("env", () => {
-  it("exports claude auth and four model variables", () => {
+  it("exports claude auth and all model variables with same model by default", () => {
     expect(buildEnv(config, "claude")).toEqual({
       ANTHROPIC_BASE_URL: "https://example.com/anthropic",
       ANTHROPIC_AUTH_TOKEN: "secret'key",
@@ -37,6 +37,104 @@ describe("env", () => {
       ANTHROPIC_DEFAULT_SONNET_MODEL: "claude-x",
       ANTHROPIC_DEFAULT_OPUS_MODEL: "claude-x",
       ANTHROPIC_DEFAULT_HAIKU_MODEL: "claude-x",
+    });
+  });
+
+  it("uses haiku override for ANTHROPIC_DEFAULT_HAIKU_MODEL", () => {
+    const configWithOverride: MswConfig = {
+      ...config,
+      active: {
+        claude: {
+          provider: "hot",
+          model: "claude-x",
+          modelOverrides: {
+            haiku: "claude-haiku",
+          },
+        },
+      },
+    };
+
+    expect(buildEnv(configWithOverride, "claude")).toEqual({
+      ANTHROPIC_BASE_URL: "https://example.com/anthropic",
+      ANTHROPIC_AUTH_TOKEN: "secret'key",
+      ANTHROPIC_MODEL: "claude-x",
+      ANTHROPIC_DEFAULT_SONNET_MODEL: "claude-x",
+      ANTHROPIC_DEFAULT_OPUS_MODEL: "claude-x",
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: "claude-haiku",
+    });
+  });
+
+  it("uses sonnet override for ANTHROPIC_DEFAULT_SONNET_MODEL", () => {
+    const configWithOverride: MswConfig = {
+      ...config,
+      active: {
+        claude: {
+          provider: "hot",
+          model: "claude-x",
+          modelOverrides: {
+            sonnet: "claude-sonnet",
+          },
+        },
+      },
+    };
+
+    expect(buildEnv(configWithOverride, "claude")).toEqual({
+      ANTHROPIC_BASE_URL: "https://example.com/anthropic",
+      ANTHROPIC_AUTH_TOKEN: "secret'key",
+      ANTHROPIC_MODEL: "claude-x",
+      ANTHROPIC_DEFAULT_SONNET_MODEL: "claude-sonnet",
+      ANTHROPIC_DEFAULT_OPUS_MODEL: "claude-x",
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: "claude-x",
+    });
+  });
+
+  it("uses opus override for ANTHROPIC_DEFAULT_OPUS_MODEL", () => {
+    const configWithOverride: MswConfig = {
+      ...config,
+      active: {
+        claude: {
+          provider: "hot",
+          model: "claude-x",
+          modelOverrides: {
+            opus: "claude-opus",
+          },
+        },
+      },
+    };
+
+    expect(buildEnv(configWithOverride, "claude")).toEqual({
+      ANTHROPIC_BASE_URL: "https://example.com/anthropic",
+      ANTHROPIC_AUTH_TOKEN: "secret'key",
+      ANTHROPIC_MODEL: "claude-x",
+      ANTHROPIC_DEFAULT_SONNET_MODEL: "claude-x",
+      ANTHROPIC_DEFAULT_OPUS_MODEL: "claude-opus",
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: "claude-x",
+    });
+  });
+
+  it("uses multiple overrides simultaneously", () => {
+    const configWithOverrides: MswConfig = {
+      ...config,
+      active: {
+        claude: {
+          provider: "hot",
+          model: "claude-x",
+          modelOverrides: {
+            haiku: "claude-haiku",
+            sonnet: "claude-sonnet",
+            opus: "claude-opus",
+          },
+        },
+      },
+    };
+
+    expect(buildEnv(configWithOverrides, "claude")).toEqual({
+      ANTHROPIC_BASE_URL: "https://example.com/anthropic",
+      ANTHROPIC_AUTH_TOKEN: "secret'key",
+      ANTHROPIC_MODEL: "claude-x",
+      ANTHROPIC_DEFAULT_SONNET_MODEL: "claude-sonnet",
+      ANTHROPIC_DEFAULT_OPUS_MODEL: "claude-opus",
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: "claude-haiku",
     });
   });
 
@@ -60,6 +158,12 @@ describe("env", () => {
                 output: 131072,
               },
             },
+            "mimo-v2.5-lite": {
+              name: "mimo-v2.5-lite",
+              limit: {
+                context: 200000,
+              },
+            },
           },
         },
       },
@@ -67,15 +171,16 @@ describe("env", () => {
         claude: {
           provider: "mimo",
           model: "mimo-v2.5-pro",
+          modelOverrides: {
+            haiku: "mimo-v2.5-lite",
+          },
         },
       },
     };
 
     const env = buildEnv(config1m, "claude");
     expect(env.ANTHROPIC_MODEL).toBe("mimo-v2.5-pro[1m]");
-    expect(env.ANTHROPIC_DEFAULT_SONNET_MODEL).toBe("mimo-v2.5-pro[1m]");
-    expect(env.ANTHROPIC_DEFAULT_OPUS_MODEL).toBe("mimo-v2.5-pro[1m]");
-    expect(env.ANTHROPIC_DEFAULT_HAIKU_MODEL).toBe("mimo-v2.5-pro[1m]");
+    expect(env.ANTHROPIC_DEFAULT_HAIKU_MODEL).toBe("mimo-v2.5-lite");
   });
 
   it("does not append [1m] when context < 1M", () => {

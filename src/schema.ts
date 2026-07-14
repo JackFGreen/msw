@@ -55,6 +55,13 @@ export const providerSchema = z
 export const activeSelectionSchema = z.object({
   provider: providerIdSchema,
   model: z.string().min(1),
+  modelOverrides: z
+    .object({
+      haiku: z.string().min(1).optional(),
+      sonnet: z.string().min(1).optional(),
+      opus: z.string().min(1).optional(),
+    })
+    .optional(),
 });
 
 export const configSchema = z

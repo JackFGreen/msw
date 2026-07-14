@@ -74,7 +74,7 @@ export async function switchAgent(
   paths: Paths,
   agent: Agent,
   provider: string,
-  options: { model?: string }
+  options: { model?: string; haiku?: boolean; sonnet?: boolean; opus?: boolean }
 ) {
   if (provider === "origin") {
     await restoreAgentOrigin(paths, agent);
@@ -85,7 +85,24 @@ export async function switchAgent(
     return;
   }
 
-  const config = setActive(await loadConfig(paths.mswConfig), agent, provider, options.model);
+  // Build model overrides from flags
+  const modelOverrides: { haiku?: string; sonnet?: string; opus?: string } | undefined =
+    options.model && (options.haiku || options.sonnet || options.opus)
+      ? {
+          ...(options.haiku && { haiku: options.model }),
+          ...(options.sonnet && { sonnet: options.model }),
+          ...(options.opus && { opus: options.model }),
+        }
+      : undefined;
+
+  const baseModel = modelOverrides ? undefined : options.model;
+  const config = setActive(
+    await loadConfig(paths.mswConfig),
+    agent,
+    provider,
+    baseModel,
+    modelOverrides
+  );
   await saveConfig(paths.mswConfig, config);
 
   switch (agent) {

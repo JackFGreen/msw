@@ -18,9 +18,16 @@ export type Provider = {
   models: Record<string, ModelConfig>;
 };
 
+export type ModelOverrides = {
+  haiku?: string;
+  sonnet?: string;
+  opus?: string;
+};
+
 export type ActiveSelection = {
   provider: string;
   model: string;
+  modelOverrides?: ModelOverrides;
 };
 
 export type MswConfig = {
