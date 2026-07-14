@@ -148,6 +148,9 @@ msw add <id> --base-url ... --api-key ... --model ... [--name ...]  # 添加 pro
 msw delete <id> [--force]        # 删除 provider
 msw switch <agent> <provider>    # 切换 agent 的 provider
 msw switch <agent> <provider> --model <model>  # 临时指定模型
+msw switch claude <provider> --model <model> --haiku   # 覆盖 haiku 槽位
+msw switch claude <provider> --model <model> --sonnet  # 覆盖 sonnet 槽位
+msw switch claude <provider> --model <model> --opus    # 覆盖 opus 槽位
 msw sync opencode                # 同步所有 provider 到 OpenCode
 msw env <agent> [provider] [--model <model>]  # 打印 shell exports（无 active provider 时静默退出）
 ```
@@ -166,6 +169,31 @@ Claude Code：
 - `msw switch claude <provider>` 更新 `~/.msw/config.jsonc` 的 `active.claude`。
 - 同时清理 `~/.claude/settings.json` 中 `env` 字段的 `ANTHROPIC_*`，避免 settings 覆盖 shell env。
 - Claude Code 不支持在 `settings.json` 的 `env` 中展开 `$VAR`，所以运行时变量由 `msw env claude` 直接导出。
+
+#### Claude 模型覆盖
+
+Claude Code 有三个内置模型槽位 — **haiku**、**sonnet**、**opus** — 分别对应 `ANTHROPIC_DEFAULT_*_MODEL` 环境变量。msw 支持单独覆盖每个槽位：
+
+```sh
+# haiku 请求使用 gpt-mini（后台任务、低成本调用）
+msw switch claude openai --model gpt-4o --haiku
+
+# 单独覆盖 sonnet 和 opus
+msw switch claude deepseek --model deepseek-chat --sonnet
+msw switch claude deepseek --model deepseek-reasoner --opus
+```
+
+`--haiku`、`--sonnet`、`--opus` 标志需要配合 `--model` 使用，指定的模型**仅**应用于对应槽位。基础模型（不带标志）用于 `ANTHROPIC_MODEL`。未设置的槽位回退到基础模型。
+
+| 标志 | 设置的环境变量 |
+|---|---|
+| `--haiku` | `ANTHROPIC_DEFAULT_HAIKU_MODEL` |
+| `--sonnet` | `ANTHROPIC_DEFAULT_SONNET_MODEL` |
+| `--opus` | `ANTHROPIC_DEFAULT_OPUS_MODEL` |
+
+模型覆盖会持久保存在 `~/.msw/config.jsonc` 的 `active.claude.modelOverrides` 中，切换到同一 provider 时保留。切换到不同 provider 会替换覆盖配置。
+
+**上下文窗口标记：** 如果模型的 `context` 限制 ≥ 1M tokens，msw 会自动在模型名后追加 `[1m]`（如 `claude-haiku-3-5[1m]`），Claude Code 据此启用长上下文路径。
 
 Codex：
 
