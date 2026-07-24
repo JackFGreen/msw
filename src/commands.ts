@@ -5,7 +5,7 @@ import { switchClaude } from "./renderers/claude.js";
 import { switchCodex } from "./renderers/codex.js";
 import { syncOpenCode, switchOpenCode } from "./renderers/opencode.js";
 import { addProvider, deleteProvider, loadConfig, saveConfig, setActive } from "./store.js";
-import type { Agent, MswConfig } from "./types.js";
+import { agents, type Agent, type MswConfig } from "./types.js";
 import { buildEnv, shellExports } from "./env.js";
 
 export async function listProviders(paths: Paths) {
@@ -156,6 +156,16 @@ export async function envOutput(
     return "";
   }
   return shellExports(buildEnv(config, agent, providerOverride, options.model));
+}
+
+export async function envOutputAll(paths: Paths) {
+  const config = await loadConfig(paths.mswConfig);
+  const all: Record<string, string> = {};
+  for (const agent of agents) {
+    if (!config.active[agent]) continue;
+    Object.assign(all, buildEnv(config, agent));
+  }
+  return shellExports(all);
 }
 
 function activeAgents(config: MswConfig, providerId: string) {

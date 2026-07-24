@@ -7,6 +7,7 @@ import { assertAgent } from "./schema.js";
 import {
   add,
   envOutput,
+  envOutputAll,
   listProviders,
   remove,
   status,
@@ -98,15 +99,28 @@ program
     console.log(`Synced ${agent}.`);
   });
 
-program
+const envCmd = program
   .command("env")
-  .argument("<agent>", "claude, codex, or opencode")
+  .argument("[agent]", "claude, codex, or opencode")
   .argument("[provider]")
+  .option("--all", "Export env vars for all active agents")
   .option("--model <model>", "Override model")
   .description("Print shell exports for an agent.")
-  .action(async (agentValue: string, provider: string | undefined, options: { model?: string }) => {
-    console.log(await envOutput(paths, assertAgent(agentValue), provider, options));
-  });
+  .action(
+    async (
+      agentValue: string | undefined,
+      provider: string | undefined,
+      options: { all?: boolean; model?: string }
+    ) => {
+      if (options.all) {
+        console.log(await envOutputAll(paths));
+      } else if (agentValue) {
+        console.log(await envOutput(paths, assertAgent(agentValue), provider, options));
+      } else {
+        envCmd.help();
+      }
+    }
+  );
 
 program.exitOverride();
 
