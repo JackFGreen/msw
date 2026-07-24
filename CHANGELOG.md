@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/JackFGreen/msw/compare/v0.3.0...v0.4.0) (2026-07-24)
+
+
+### Features
+
+* add msw env --all and model overrides support ([31019b9](https://github.com/JackFGreen/msw/commit/31019b90a8064d2bae91da660977047c6e80dcb2))
+
 ## [0.3.0](https://github.com/JackFGreen/msw/compare/v0.2.1...v0.3.0) (2026-07-14)
 
 
