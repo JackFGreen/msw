@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/JackFGreen/msw/compare/v0.4.0...v0.5.0) (2026-10-19)
+
+
+### Features
+
+* add provider editing and Claude-specific base URL options ([c4c578a](https://github.com/JackFGreen/msw/commit/c4c578a3bea87db1b1c16d2009220baf81a05aeb))
+
 ## [0.4.0](https://github.com/JackFGreen/msw/compare/v0.3.0...v0.4.0) (2026-07-24)
 
 
