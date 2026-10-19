@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import { parse, stringify } from "comment-json";
 import { MswError } from "./errors.js";
 import { atomicWrite, pathExists } from "./fs-utils.js";
-import { addProviderSchema, configSchema } from "./schema.js";
+import { addProviderSchema, configSchema, editProviderSchema } from "./schema.js";
 import type { Agent, MswConfig } from "./types.js";
 
 const defaultConfig: MswConfig = {
@@ -50,6 +50,7 @@ export function addProvider(config: MswConfig, input: unknown): MswConfig {
       [parsed.id]: {
         name: parsed.name ?? parsed.id,
         baseURL: parsed.baseURL,
+        ...(parsed.claude && { baseURLs: { claude: parsed.baseURL } }),
         apiKey: parsed.apiKey,
         defaultModel: parsed.model,
         models: {
@@ -57,6 +58,39 @@ export function addProvider(config: MswConfig, input: unknown): MswConfig {
             name: parsed.model,
           },
         },
+      },
+    },
+  };
+}
+
+export function editProvider(config: MswConfig, id: string, input: unknown): MswConfig {
+  const provider = config.providers[id];
+  if (!provider) {
+    throw new MswError(`unknown provider: ${id}`);
+  }
+
+  const parsed = editProviderSchema.parse(input);
+  const { model, claude, baseURL, ...fields } = parsed;
+  const changes = Object.fromEntries(
+    Object.entries(fields).filter(([, value]) => value !== undefined)
+  );
+
+  return {
+    ...config,
+    providers: {
+      ...config.providers,
+      [id]: {
+        ...provider,
+        ...changes,
+        ...(baseURL !== undefined &&
+          (claude ? { baseURLs: { ...provider.baseURLs, claude: baseURL } } : { baseURL })),
+        ...(model !== undefined && {
+          defaultModel: model,
+          models: {
+            ...provider.models,
+            [model]: provider.models[model] ?? { name: model },
+          },
+        }),
       },
     },
   };

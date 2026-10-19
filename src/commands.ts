@@ -4,8 +4,15 @@ import type { Paths } from "./paths.js";
 import { switchClaude } from "./renderers/claude.js";
 import { switchCodex } from "./renderers/codex.js";
 import { syncOpenCode, switchOpenCode } from "./renderers/opencode.js";
-import { addProvider, deleteProvider, loadConfig, saveConfig, setActive } from "./store.js";
-import { agents, type Agent, type MswConfig } from "./types.js";
+import {
+  addProvider,
+  deleteProvider,
+  editProvider,
+  loadConfig,
+  saveConfig,
+  setActive,
+} from "./store.js";
+import { agents, type Agent, type EditProviderOptions, type MswConfig } from "./types.js";
 import { buildEnv, shellExports } from "./env.js";
 
 export async function listProviders(paths: Paths) {
@@ -50,7 +57,7 @@ export async function status(paths: Paths) {
 export async function add(
   paths: Paths,
   id: string,
-  options: { name?: string; baseUrl: string; apiKey: string; model: string }
+  options: { name?: string; baseUrl: string; apiKey: string; model: string; claude?: boolean }
 ) {
   const config = await loadConfig(paths.mswConfig);
   await saveConfig(
@@ -59,6 +66,21 @@ export async function add(
       id,
       name: options.name,
       baseURL: options.baseUrl,
+      claude: options.claude,
+      apiKey: options.apiKey,
+      model: options.model,
+    })
+  );
+}
+
+export async function edit(paths: Paths, id: string, options: EditProviderOptions) {
+  const config = await loadConfig(paths.mswConfig);
+  await saveConfig(
+    paths.mswConfig,
+    editProvider(config, id, {
+      name: options.name,
+      baseURL: options.baseUrl,
+      claude: options.claude,
       apiKey: options.apiKey,
       model: options.model,
     })

@@ -92,9 +92,24 @@ export const addProviderSchema = z.object({
   id: providerIdSchema,
   name: z.string().min(1).optional(),
   baseURL: z.string().url(),
+  claude: z.boolean().optional(),
   apiKey: z.string().min(1),
   model: z.string().min(1),
 });
+
+export const editProviderSchema = addProviderSchema
+  .omit({ id: true })
+  .partial()
+  .refine(
+    (input) =>
+      [input.name, input.baseURL, input.apiKey, input.model].some((value) => value !== undefined),
+    {
+      message: "provide at least one field to edit",
+    }
+  )
+  .refine((input) => !input.claude || input.baseURL !== undefined, {
+    message: "--claude requires --base-url",
+  });
 
 export function assertAgent(value: string) {
   const parsed = z.enum(agents).safeParse(value);

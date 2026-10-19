@@ -6,6 +6,7 @@ import { createPaths } from "./paths.js";
 import { assertAgent } from "./schema.js";
 import {
   add,
+  edit,
   envOutput,
   envOutputAll,
   listProviders,
@@ -14,6 +15,7 @@ import {
   switchAgent,
   syncAgent,
 } from "./commands.js";
+import type { EditProviderOptions } from "./types.js";
 
 const require = createRequire(import.meta.url);
 const pkg = require("../package.json") as { version: string };
@@ -45,6 +47,7 @@ program
   .command("add")
   .argument("<id>")
   .requiredOption("--base-url <url>", "Provider base URL")
+  .option("--claude", "Use --base-url as the Claude-specific URL")
   .requiredOption("--api-key <key>", "Provider API key stored in ~/.msw/config.jsonc")
   .requiredOption("--model <model>", "Default model")
   .option("--name <name>", "Display name")
@@ -52,12 +55,26 @@ program
   .action(
     async (
       id: string,
-      options: { name?: string; baseUrl: string; apiKey: string; model: string }
+      options: { name?: string; baseUrl: string; apiKey: string; model: string; claude?: boolean }
     ) => {
       await add(paths, id, options);
       console.log(`Added provider ${id}.`);
     }
   );
+
+program
+  .command("edit")
+  .argument("<provider>")
+  .option("--name <name>", "Display name")
+  .option("--api-key <key>", "Provider API key stored in ~/.msw/config.jsonc")
+  .option("--base-url <url>", "Provider base URL")
+  .option("--claude", "Use --base-url as the Claude-specific URL")
+  .option("--model <model>", "Default model")
+  .description("Edit a provider.")
+  .action(async (provider: string, options: EditProviderOptions) => {
+    await edit(paths, provider, options);
+    console.log(`Updated provider ${provider}.`);
+  });
 
 program
   .command("delete")

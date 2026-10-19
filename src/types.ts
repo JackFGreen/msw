@@ -18,6 +18,14 @@ export type Provider = {
   models: Record<string, ModelConfig>;
 };
 
+export type EditProviderOptions = {
+  name?: string;
+  baseUrl?: string;
+  claude?: boolean;
+  apiKey?: string;
+  model?: string;
+};
+
 export type ModelOverrides = {
   haiku?: string;
   sonnet?: string;

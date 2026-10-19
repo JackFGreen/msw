@@ -170,7 +170,8 @@ msw switch claude mimo-cn --haiku mimo-v2.5
 ```sh
 msw list                         # 查看 providers 和 active 状态
 msw status                       # 查看配置文件路径和 active 状态
-msw add <id> --base-url ... --api-key ... --model ... [--name ...]  # 添加 provider
+msw add <id> --base-url ... [--claude] --api-key ... --model ... [--name ...]  # 添加 provider
+msw edit <provider> [--name ...] [--api-key ...] [--base-url ... [--claude]] [--model ...]  # 修改 provider
 msw delete <id> [--force]        # 删除 provider
 msw switch <agent> <provider>    # 切换 agent 的 provider
 msw switch <agent> <provider> --model <model>  # 临时指定模型
@@ -181,6 +182,26 @@ msw sync opencode                # 同步所有 provider 到 OpenCode
 msw env <agent> [provider] [--model <model>]  # 打印 shell exports（无 active provider 时静默退出）
 msw env --all                                 # 打印所有 active agent 的 shell exports
 ```
+
+修改已有 provider 时，至少传入一个字段，仅更新传入的字段：
+
+```sh
+msw edit openrouter --name=OpenRouter --api-key=sk-new-key
+msw edit openrouter --base-url https://openrouter.ai/api/v1 --model openai/gpt-4o
+```
+
+`--name` 修改显示名，provider ID 保持不变。`--model` 修改默认模型；若模型尚未存在于 `models`，会自动添加，已有模型及其详细配置会保留。
+
+`add` 和 `edit` 支持通过 `--claude` 将 `--base-url` 指定为 Claude 专用地址：
+
+```sh
+msw add demo --claude --base-url=https://example.com/anthropic --api-key=sk-xxx --model=claude-model
+msw edit demo --claude --base-url=https://new.example.com/anthropic
+```
+
+`add --claude` 将地址同时保存到 `baseURL` 和 `baseURLs.claude`，作为新 provider 的通用地址和 Claude 专用地址。`edit --claude` 仅修改 `baseURLs.claude`，保留通用地址和其他 agent 的地址。`--claude` 必须配合 `--base-url` 使用；不带 `--claude` 时沿用通用地址的行为。
+
+`edit` 仅保存 msw 配置，保留当前 active 选择，不自动同步 agent 配置或刷新 shell 环境变量。按需重新执行 `eval "$(msw env --all)"`、`msw switch` 或 `msw sync opencode` 应用修改；切换时未指定 `--model` 则使用新的默认模型。
 
 OpenCode 需要先 sync 再 switch：
 
