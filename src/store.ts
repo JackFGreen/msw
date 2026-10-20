@@ -70,10 +70,39 @@ export function editProvider(config: MswConfig, id: string, input: unknown): Msw
   }
 
   const parsed = editProviderSchema.parse(input);
-  const { model, claude, baseURL, ...fields } = parsed;
+  const { model, claude, baseURL, removeModels, ...fields } = parsed;
   const changes = Object.fromEntries(
     Object.entries(fields).filter(([, value]) => value !== undefined)
   );
+
+  const removedModels = new Set(removeModels ?? []);
+  if (removedModels.size > 0) {
+    for (const removed of removedModels) {
+      if (!provider.models[removed]) {
+        throw new MswError(`unknown model "${removed}" for provider "${id}"`);
+      }
+    }
+
+    if (removedModels.has(provider.defaultModel) && model === undefined) {
+      throw new MswError(
+        `cannot remove default model "${provider.defaultModel}"; pass --model <new-default>`
+      );
+    }
+
+    const activeReference = findActiveModelReference(config, id, removedModels);
+    if (activeReference) {
+      throw new MswError(
+        `model "${activeReference.model}" is active for ${activeReference.agent}; run \`msw switch ${activeReference.agent} ${id} --model <model>\` first`
+      );
+    }
+  }
+
+  const modelsAfterRemoval = Object.fromEntries(
+    Object.entries(provider.models).filter(([name]) => !removedModels.has(name))
+  );
+  if (model !== undefined) {
+    modelsAfterRemoval[model] = provider.models[model] ?? { name: model };
+  }
 
   return {
     ...config,
@@ -86,14 +115,32 @@ export function editProvider(config: MswConfig, id: string, input: unknown): Msw
           (claude ? { baseURLs: { ...provider.baseURLs, claude: baseURL } } : { baseURL })),
         ...(model !== undefined && {
           defaultModel: model,
-          models: {
-            ...provider.models,
-            [model]: provider.models[model] ?? { name: model },
-          },
+        }),
+        ...((model !== undefined || removedModels.size > 0) && {
+          models: modelsAfterRemoval,
         }),
       },
     },
   };
+}
+
+function findActiveModelReference(config: MswConfig, providerId: string, models: Set<string>) {
+  for (const [agent, selection] of Object.entries(config.active)) {
+    if (!selection || selection.provider !== providerId) continue;
+
+    const model = [
+      selection.model,
+      selection.modelOverrides?.haiku,
+      selection.modelOverrides?.sonnet,
+      selection.modelOverrides?.opus,
+    ].find((value): value is string => value !== undefined && models.has(value));
+
+    if (model) {
+      return { agent, model };
+    }
+  }
+
+  return undefined;
 }
 
 export function deleteProvider(config: MswConfig, id: string, force: boolean): MswConfig {

@@ -28,6 +28,13 @@ function fixture(): MswConfig {
   };
 }
 
+function fixtureWithExtraModels(): MswConfig {
+  const config = fixture();
+  config.providers.hot.models.old = { name: "Old", limit: { context: 1000 } };
+  config.providers.hot.models.mini = { name: "Mini" };
+  return config;
+}
+
 async function setup() {
   const home = await fs.mkdtemp(path.join(os.tmpdir(), "msw-edit-"));
   homes.push(home);
@@ -84,6 +91,66 @@ describe("editProvider", () => {
     );
   });
 
+  it("removes a non-default model without mutating the input", () => {
+    const config = fixtureWithExtraModels();
+    const original = structuredClone(config);
+    const edited = editProvider(config, "hot", { removeModels: ["old"] });
+
+    expect(edited.providers.hot.models.old).toBeUndefined();
+    expect(edited.providers.hot.models.gpt).toEqual(config.providers.hot.models.gpt);
+    expect(edited.providers.hot.models.mini).toEqual(config.providers.hot.models.mini);
+    expect(edited.providers.hot.defaultModel).toBe("gpt");
+    expect(edited.active).toEqual(config.active);
+    expect(config).toEqual(original);
+  });
+
+  it("removes the default model when a replacement default is supplied", () => {
+    const config = { ...fixture(), active: {} };
+    const edited = editProvider(config, "hot", {
+      model: "new-model",
+      removeModels: ["gpt"],
+    });
+
+    expect(edited.providers.hot.defaultModel).toBe("new-model");
+    expect(edited.providers.hot.models.gpt).toBeUndefined();
+    expect(edited.providers.hot.models["new-model"]).toEqual({ name: "new-model" });
+  });
+
+  it("rejects removing the default model without a replacement", () => {
+    const config = { ...fixture(), active: {} };
+    expect(() => editProvider(config, "hot", { removeModels: ["gpt"] })).toThrow(
+      'cannot remove default model "gpt"'
+    );
+  });
+
+  it("rejects removing unknown models", () => {
+    expect(() => editProvider(fixture(), "hot", { removeModels: ["missing"] })).toThrow(
+      'unknown model "missing"'
+    );
+  });
+
+  it("rejects removing a model referenced by an active selection", () => {
+    const config = fixtureWithExtraModels();
+    config.providers.hot.defaultModel = "new-default";
+    config.providers.hot.models["new-default"] = { name: "New default" };
+
+    expect(() => editProvider(config, "hot", { removeModels: ["gpt"] })).toThrow(
+      "active for claude"
+    );
+  });
+
+  it("rejects removing a model referenced by an active model override", () => {
+    expect(() => editProvider(fixtureWithExtraModels(), "hot", { removeModels: ["mini"] })).toThrow(
+      "active for claude"
+    );
+  });
+
+  it("rejects setting and removing the same model", () => {
+    expect(() => editProvider(fixture(), "hot", { model: "gpt", removeModels: ["gpt"] })).toThrow(
+      "cannot set and remove the same model"
+    );
+  });
+
   it("rejects unknown providers", () => {
     expect(() => editProvider(fixture(), "missing", { name: "New" })).toThrow(
       "unknown provider: missing"
@@ -98,6 +165,7 @@ describe("editProvider", () => {
     { baseURL: "" },
     { baseURL: "invalid" },
     { model: "" },
+    { removeModels: [] },
   ])("rejects invalid changes: %j", (changes) => {
     expect(() => editProvider(fixture(), "hot", changes)).toThrow();
   });
@@ -167,6 +235,61 @@ describe("edit CLI", () => {
     expect(await fs.readdir(home)).toEqual([".msw"]);
   });
 
+  it("removes a model with --remove-model", async () => {
+    const { home, paths } = await setup();
+    const original = fixtureWithExtraModels();
+    await saveConfig(paths.mswConfig, original);
+
+    const { stdout, stderr } = await runCli(home, ["hot", "--remove-model", "old"]);
+
+    expect(stdout).toBe("Updated provider hot.\n");
+    expect(stderr).toBe("");
+    const edited = await loadConfig(paths.mswConfig);
+    expect(edited.providers.hot.models.old).toBeUndefined();
+    expect(edited.providers.hot.models.gpt).toEqual(original.providers.hot.models.gpt);
+    expect(edited.providers.hot.models.mini).toEqual(original.providers.hot.models.mini);
+    expect(edited.providers.hot.defaultModel).toBe("gpt");
+    expect(edited.active).toEqual(original.active);
+  });
+
+  it("accepts repeated --remove-model options", async () => {
+    const { home, paths } = await setup();
+    const original = fixture();
+    original.providers.hot.models.a = { name: "A" };
+    original.providers.hot.models.b = { name: "B" };
+    await saveConfig(paths.mswConfig, original);
+
+    await runCli(home, ["hot", "--remove-model=a", "--remove-model", "b"]);
+
+    const edited = await loadConfig(paths.mswConfig);
+    expect(edited.providers.hot.models.a).toBeUndefined();
+    expect(edited.providers.hot.models.b).toBeUndefined();
+    expect(edited.providers.hot.models.gpt).toEqual(original.providers.hot.models.gpt);
+  });
+
+  it("removes the default model when --model supplies a replacement", async () => {
+    const { home, paths } = await setup();
+    const original = { ...fixture(), active: {} };
+    await saveConfig(paths.mswConfig, original);
+
+    await runCli(home, ["hot", "--model", "new-model", "--remove-model", "gpt"]);
+
+    const edited = await loadConfig(paths.mswConfig);
+    expect(edited.providers.hot.defaultModel).toBe("new-model");
+    expect(edited.providers.hot.models.gpt).toBeUndefined();
+    expect(edited.providers.hot.models["new-model"]).toEqual({ name: "new-model" });
+  });
+
+  it("rejects removing an active model without rewriting config", async () => {
+    const { home, paths } = await setup();
+    const original = fixtureWithExtraModels();
+    await saveConfig(paths.mswConfig, original);
+    const before = await fs.readFile(paths.mswConfig, "utf8");
+
+    await expect(runCli(home, ["hot", "--remove-model=mini"])).rejects.toMatchObject({ code: 1 });
+    expect(await fs.readFile(paths.mswConfig, "utf8")).toBe(before);
+  });
+
   it.each([
     ["hot"],
     ["missing", "--name=New"],
@@ -175,6 +298,10 @@ describe("edit CLI", () => {
     ["hot", "--api-key="],
     ["hot", "--base-url=invalid"],
     ["hot", "--model="],
+    ["hot", "--remove-model="],
+    ["hot", "--remove-model=missing"],
+    ["hot", "--remove-model=gpt"],
+    ["hot", "--model=gpt", "--remove-model=gpt"],
     ["hot", "--claude"],
     ["hot", "--claude", "--name=New"],
     ["hot", "--claude", "--base-url=invalid"],

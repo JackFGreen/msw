@@ -171,7 +171,7 @@ msw switch claude mimo-cn --haiku mimo-v2.5
 msw list                         # 查看 providers 和 active 状态
 msw status                       # 查看配置文件路径和 active 状态
 msw add <id> --base-url ... [--claude] --api-key ... --model ... [--name ...]  # 添加 provider
-msw edit <provider> [--name ...] [--api-key ...] [--base-url ... [--claude]] [--model ...]  # 修改 provider
+msw edit <provider> [--name ...] [--api-key ...] [--base-url ... [--claude]] [--model ...] [--remove-model ...]  # 修改 provider
 msw delete <id> [--force]        # 删除 provider
 msw switch <agent> <provider>    # 切换 agent 的 provider
 msw switch <agent> <provider> --model <model>  # 临时指定模型
@@ -191,6 +191,14 @@ msw edit openrouter --base-url https://openrouter.ai/api/v1 --model openai/gpt-4
 ```
 
 `--name` 修改显示名，provider ID 保持不变。`--model` 修改默认模型；若模型尚未存在于 `models`，会自动添加，已有模型及其详细配置会保留。
+
+`--remove-model` 从 `models` 中删除模型，可重复使用。不能直接删除当前默认模型，需同时通过 `--model` 指定新的默认模型；如果模型正被 active agent 或 `modelOverrides` 使用，命令会拒绝删除并提示先切换：
+
+```sh
+msw edit openrouter --remove-model openai/gpt-4o-mini
+msw edit openrouter --model openai/gpt-4o --remove-model openai/gpt-4o-mini
+msw edit openrouter --remove-model model-a --remove-model model-b
+```
 
 `add` 和 `edit` 支持通过 `--claude` 将 `--base-url` 指定为 Claude 专用地址：
 

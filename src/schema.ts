@@ -99,16 +99,23 @@ export const addProviderSchema = z.object({
 
 export const editProviderSchema = addProviderSchema
   .omit({ id: true })
+  .extend({
+    removeModels: z.array(z.string().min(1)).optional(),
+  })
   .partial()
   .refine(
     (input) =>
-      [input.name, input.baseURL, input.apiKey, input.model].some((value) => value !== undefined),
+      [input.name, input.baseURL, input.apiKey, input.model].some((value) => value !== undefined) ||
+      (input.removeModels?.length ?? 0) > 0,
     {
       message: "provide at least one field to edit",
     }
   )
   .refine((input) => !input.claude || input.baseURL !== undefined, {
     message: "--claude requires --base-url",
+  })
+  .refine((input) => !input.model || !input.removeModels?.includes(input.model), {
+    message: "cannot set and remove the same model",
   });
 
 export function assertAgent(value: string) {

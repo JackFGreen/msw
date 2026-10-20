@@ -83,6 +83,7 @@ export async function edit(paths: Paths, id: string, options: EditProviderOption
       claude: options.claude,
       apiKey: options.apiKey,
       model: options.model,
+      removeModels: options.removeModels,
     })
   );
 }

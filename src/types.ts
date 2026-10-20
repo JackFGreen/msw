@@ -24,6 +24,7 @@ export type EditProviderOptions = {
   claude?: boolean;
   apiKey?: string;
   model?: string;
+  removeModels?: string[];
 };
 
 export type ModelOverrides = {

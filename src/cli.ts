@@ -23,6 +23,10 @@ const pkg = require("../package.json") as { version: string };
 const program = new Command();
 const paths = createPaths();
 
+function collect(value: string, previous: string[] = []) {
+  return [...previous, value];
+}
+
 program
   .name("msw")
   .description("Provider switch CLI for Claude Code, Codex, and OpenCode.")
@@ -70,9 +74,17 @@ program
   .option("--base-url <url>", "Provider base URL")
   .option("--claude", "Use --base-url as the Claude-specific URL")
   .option("--model <model>", "Default model")
+  .option("--remove-model <model>", "Remove a model from the provider (repeatable)", collect)
   .description("Edit a provider.")
-  .action(async (provider: string, options: EditProviderOptions) => {
-    await edit(paths, provider, options);
+  .action(async (provider: string, options: EditProviderOptions & { removeModel?: string[] }) => {
+    await edit(paths, provider, {
+      name: options.name,
+      baseUrl: options.baseUrl,
+      claude: options.claude,
+      apiKey: options.apiKey,
+      model: options.model,
+      removeModels: options.removeModel,
+    });
     console.log(`Updated provider ${provider}.`);
   });
 
