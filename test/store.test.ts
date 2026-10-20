@@ -165,4 +165,47 @@ describe("store", () => {
     config = setActive(config, "codex", "cold");
     expect(config.active.codex?.effort).toBeUndefined();
   });
+
+  it("rejects unmatched effort for every agent when variants are configured", () => {
+    const base = addProvider(
+      {
+        version: 1,
+        providers: {},
+        active: {},
+      },
+      {
+        id: "hot",
+        baseURL: "https://example.com/v1",
+        apiKey: "secret",
+        model: "gpt",
+      }
+    );
+    const config = {
+      ...base,
+      providers: {
+        ...base.providers,
+        hot: {
+          ...base.providers.hot,
+          models: {
+            gpt: {
+              name: "gpt",
+              variants: {
+                low: { options: { reasoningEffort: "low" } },
+                high: { options: { reasoningEffort: "high" } },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    for (const agent of ["claude", "codex", "opencode"] as const) {
+      expect(() => setActive(config, agent, "hot", undefined, undefined, "xhigh")).toThrow(
+        `unknown effort "xhigh" for ${agent} model "hot/gpt"; configured variants: low, high`
+      );
+      expect(
+        setActive(config, agent, "hot", undefined, undefined, "high").active[agent]?.effort
+      ).toBe("high");
+    }
+  });
 });

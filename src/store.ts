@@ -3,7 +3,7 @@ import { parse, stringify } from "comment-json";
 import { MswError } from "./errors.js";
 import { atomicWrite, pathExists } from "./fs-utils.js";
 import { addProviderSchema, configSchema, editProviderSchema } from "./schema.js";
-import type { Agent, MswConfig } from "./types.js";
+import type { Agent, MswConfig, Provider } from "./types.js";
 
 const defaultConfig: MswConfig = {
   version: 1,
@@ -184,6 +184,10 @@ export function setActive(
   const existingOverrides = current?.provider === provider ? current.modelOverrides : undefined;
   const existingEffort = current?.provider === provider ? current.effort : undefined;
   const selectedEffort = effort ?? existingEffort;
+  const selectedModel = model ?? selected.defaultModel;
+  if (effort !== undefined) {
+    validateEffort(agent, provider, selected, selectedModel, effort);
+  }
 
   return {
     ...config,
@@ -191,7 +195,7 @@ export function setActive(
       ...config.active,
       [agent]: {
         provider,
-        model: model ?? selected.defaultModel,
+        model: selectedModel,
         ...(selectedEffort && { effort: selectedEffort }),
         modelOverrides: modelOverrides
           ? { ...existingOverrides, ...modelOverrides }
@@ -199,6 +203,24 @@ export function setActive(
       },
     },
   };
+}
+
+function validateEffort(
+  agent: Agent,
+  id: string,
+  provider: Provider,
+  model: string,
+  effort: string
+) {
+  const variants = provider.models[model]?.variants;
+  if (!variants) return;
+
+  if (!variants[effort]) {
+    const available = Object.keys(variants).join(", ") || "<none>";
+    throw new MswError(
+      `unknown effort "${effort}" for ${agent} model "${id}/${model}"; configured variants: ${available}`
+    );
+  }
 }
 
 export function requireActive(

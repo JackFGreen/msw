@@ -70,17 +70,17 @@ exec zsh
 
 ## 环境变量
 
-| 环境变量                              | agent    |
-| ------------------------------------- | -------- |
-| `ANTHROPIC_BASE_URL`                  | claude   |
-| `ANTHROPIC_AUTH_TOKEN`                | claude   |
-| `ANTHROPIC_MODEL`                     | claude   |
-| `ANTHROPIC_DEFAULT_SONNET_MODEL`      | claude   |
-| `ANTHROPIC_DEFAULT_OPUS_MODEL`        | claude   |
-| `ANTHROPIC_DEFAULT_HAIKU_MODEL`       | claude   |
-| `CLAUDE_CODE_EFFORT_LEVEL`            | claude   |
-| `MSW_CODEX_API_KEY`                   | codex    |
-| `MSW_OPENCODE_<PROVIDER_ID>_API_KEY`  | opencode |
+| 环境变量                             | agent    |
+| ------------------------------------ | -------- |
+| `ANTHROPIC_BASE_URL`                 | claude   |
+| `ANTHROPIC_AUTH_TOKEN`               | claude   |
+| `ANTHROPIC_MODEL`                    | claude   |
+| `ANTHROPIC_DEFAULT_SONNET_MODEL`     | claude   |
+| `ANTHROPIC_DEFAULT_OPUS_MODEL`       | claude   |
+| `ANTHROPIC_DEFAULT_HAIKU_MODEL`      | claude   |
+| `CLAUDE_CODE_EFFORT_LEVEL`           | claude   |
+| `MSW_CODEX_API_KEY`                  | codex    |
+| `MSW_OPENCODE_<PROVIDER_ID>_API_KEY` | opencode |
 
 ## 配置文件
 
@@ -137,10 +137,10 @@ Model 可配置 `limit.context` 指定上下文窗口大小。`msw env claude` �
     "mimo-v2.5-pro": {
       "name": "mimo-v2.5-pro",
       "limit": {
-        "context": 1048576
-      }
-    }
-  }
+        "context": 1048576,
+      },
+    },
+  },
 }
 ```
 
@@ -159,10 +159,10 @@ msw switch claude mimo-cn --haiku mimo-v2.5
       "provider": "mimo-cn",
       "model": "mimo-v2.5-pro",
       "modelOverrides": {
-        "haiku": "mimo-v2.5"
-      }
-    }
-  }
+        "haiku": "mimo-v2.5",
+      },
+    },
+  },
 }
 ```
 
@@ -184,6 +184,8 @@ msw sync opencode                # 同步所有 provider 到 OpenCode
 msw env <agent> [provider] [--model <model>]  # 打印 shell exports（无 active provider 时静默退出）
 msw env --all                                 # 打印所有 active agent 的 shell exports
 ```
+
+`--effort` 会检查所选模型的 `variants`：如果模型配置了 `variants` 但不包含指定 effort，switch 会报错并列出可用 variants；未配置 `variants` 时直接透传。
 
 修改已有 provider 时，至少传入一个字段，仅更新传入的字段：
 
@@ -244,11 +246,11 @@ msw switch claude deepseek --model deepseek-reasoner --opus
 
 `--haiku`、`--sonnet`、`--opus` 标志需要配合 `--model` 使用，指定的模型**仅**应用于对应槽位。基础模型（不带标志）用于 `ANTHROPIC_MODEL`。未设置的槽位回退到基础模型。
 
-| 标志 | 设置的环境变量 |
-|---|---|
-| `--haiku` | `ANTHROPIC_DEFAULT_HAIKU_MODEL` |
+| 标志       | 设置的环境变量                   |
+| ---------- | -------------------------------- |
+| `--haiku`  | `ANTHROPIC_DEFAULT_HAIKU_MODEL`  |
 | `--sonnet` | `ANTHROPIC_DEFAULT_SONNET_MODEL` |
-| `--opus` | `ANTHROPIC_DEFAULT_OPUS_MODEL` |
+| `--opus`   | `ANTHROPIC_DEFAULT_OPUS_MODEL`   |
 
 模型覆盖会持久保存在 `~/.msw/config.jsonc` 的 `active.claude.modelOverrides` 中，切换到同一 provider 时保留。切换到不同 provider 会替换覆盖配置。
 
