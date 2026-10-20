@@ -39,7 +39,7 @@ export async function switchOpenCode(paths: Paths, config: MswConfig) {
     throw new MswError(`opencode provider ${selection.id} is not synced; run msw sync opencode`);
   }
 
-  opencode.model = `${selection.id}/${selection.model}`;
+  opencode.model = `${selection.id}/${selection.model}${selection.effort ? `#${selection.effort}` : ""}`;
   await writeJsonObject(paths.opencodeConfig, opencode);
 }
 

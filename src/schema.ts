@@ -55,6 +55,7 @@ export const providerSchema = z
 export const activeSelectionSchema = z.object({
   provider: providerIdSchema,
   model: z.string().min(1),
+  effort: z.string().min(1).optional(),
   modelOverrides: z
     .object({
       haiku: z.string().min(1).optional(),

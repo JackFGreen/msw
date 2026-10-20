@@ -88,6 +88,37 @@ describe("renderers", () => {
     expect(raw).not.toContain("hot-secret");
   });
 
+  it("writes and clears codex reasoning effort", async () => {
+    const paths = await tempPaths();
+    await fs.mkdir(path.dirname(paths.codexConfig), { recursive: true });
+    await fs.writeFile(paths.codexConfig, `model_reasoning_effort = "low"\n`);
+    const configWithEffort: MswConfig = {
+      ...config,
+      active: {
+        ...config.active,
+        codex: { provider: "hot", model: "gpt-hot", effort: "high" },
+      },
+    };
+
+    await switchCodex(paths, configWithEffort);
+    expect(
+      (
+        parseToml(await fs.readFile(paths.codexConfig, "utf8")) as {
+          model_reasoning_effort?: string;
+        }
+      ).model_reasoning_effort
+    ).toBe("high");
+
+    await switchCodex(paths, config);
+    expect(
+      (
+        parseToml(await fs.readFile(paths.codexConfig, "utf8")) as {
+          model_reasoning_effort?: string;
+        }
+      ).model_reasoning_effort
+    ).toBeUndefined();
+  });
+
   it("syncs all opencode providers without api key plaintext", async () => {
     const paths = await tempPaths();
     await fs.mkdir(path.dirname(paths.opencodeConfig), { recursive: true });
@@ -232,5 +263,65 @@ describe("renderers", () => {
       model: string;
     };
     expect(parsed.model).toBe("cold/gpt-cold");
+  });
+
+  it("adds opencode effort variant to the active model", async () => {
+    const paths = await tempPaths();
+    await fs.mkdir(path.dirname(paths.opencodeConfig), { recursive: true });
+    await fs.writeFile(
+      paths.opencodeConfig,
+      JSON.stringify({ providers: { cold: { settings: {} } } })
+    );
+    const configWithEffort: MswConfig = {
+      ...config,
+      active: {
+        ...config.active,
+        opencode: { provider: "cold", model: "gpt-cold", effort: "high" },
+      },
+    };
+
+    await switchOpenCode(paths, configWithEffort);
+
+    const parsed = parseJson(await fs.readFile(paths.opencodeConfig, "utf8")) as unknown as {
+      model: string;
+    };
+    expect(parsed.model).toBe("cold/gpt-cold#high");
+  });
+
+  it("writes opencode effort directly without resolving variants", async () => {
+    const paths = await tempPaths();
+    await fs.mkdir(path.dirname(paths.opencodeConfig), { recursive: true });
+    await fs.writeFile(
+      paths.opencodeConfig,
+      JSON.stringify({ providers: { cold: { settings: {} } } })
+    );
+    const configWithVariants: MswConfig = {
+      ...config,
+      providers: {
+        ...config.providers,
+        cold: {
+          ...config.providers.cold,
+          models: {
+            ...config.providers.cold.models,
+            "gpt-cold": {
+              name: "gpt-cold",
+              variants: {
+                deep: { options: { reasoningEffort: "high" } },
+              },
+            },
+          },
+        },
+      },
+      active: {
+        ...config.active,
+        opencode: { provider: "cold", model: "gpt-cold", effort: "high" },
+      },
+    };
+
+    await switchOpenCode(paths, configWithVariants);
+    const parsed = parseJson(await fs.readFile(paths.opencodeConfig, "utf8")) as unknown as {
+      model: string;
+    };
+    expect(parsed.model).toBe("cold/gpt-cold#high");
   });
 });

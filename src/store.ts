@@ -172,7 +172,8 @@ export function setActive(
   agent: Agent,
   provider: string,
   model?: string,
-  modelOverrides?: { haiku?: string; sonnet?: string; opus?: string }
+  modelOverrides?: { haiku?: string; sonnet?: string; opus?: string },
+  effort?: string
 ): MswConfig {
   const selected = config.providers[provider];
   if (!selected) {
@@ -181,6 +182,8 @@ export function setActive(
 
   const current = config.active[agent];
   const existingOverrides = current?.provider === provider ? current.modelOverrides : undefined;
+  const existingEffort = current?.provider === provider ? current.effort : undefined;
+  const selectedEffort = effort ?? existingEffort;
 
   return {
     ...config,
@@ -189,6 +192,7 @@ export function setActive(
       [agent]: {
         provider,
         model: model ?? selected.defaultModel,
+        ...(selectedEffort && { effort: selectedEffort }),
         modelOverrides: modelOverrides
           ? { ...existingOverrides, ...modelOverrides }
           : existingOverrides,
@@ -203,12 +207,14 @@ export function requireActive(
   providerOverride?: string,
   modelOverride?: string
 ) {
+  const active = config.active[agent];
   const selection = providerOverride
     ? {
         provider: providerOverride,
         model: modelOverride ?? config.providers[providerOverride]?.defaultModel,
+        effort: active && active.provider === providerOverride ? active.effort : undefined,
       }
-    : config.active[agent];
+    : active;
 
   if (!selection?.provider || !selection.model) {
     throw new MswError(`no active provider for ${agent}`);
@@ -223,7 +229,8 @@ export function requireActive(
     id: selection.provider,
     provider,
     model: modelOverride ?? selection.model,
-    modelOverrides: config.active[agent]?.modelOverrides,
+    effort: selection.effort,
+    modelOverrides: active?.modelOverrides,
   };
 }
 

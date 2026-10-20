@@ -138,6 +138,49 @@ describe("env", () => {
     });
   });
 
+  it("exports claude effort level", () => {
+    const configWithEffort: MswConfig = {
+      ...config,
+      active: {
+        claude: {
+          provider: "hot",
+          model: "claude-x",
+          effort: "high",
+        },
+      },
+    };
+
+    expect(buildEnv(configWithEffort, "claude").CLAUDE_CODE_EFFORT_LEVEL).toBe("high");
+  });
+
+  it("does not apply effort from a different active provider", () => {
+    const configWithOverride: MswConfig = {
+      ...config,
+      providers: {
+        ...config.providers,
+        cold: {
+          name: "Cold",
+          baseURL: "https://cold.example.com/v1",
+          apiKey: "cold-key",
+          defaultModel: "cold-model",
+          models: {
+            "cold-model": { name: "cold-model" },
+          },
+        },
+      },
+      active: {
+        claude: {
+          provider: "hot",
+          model: "claude-x",
+          effort: "high",
+        },
+      },
+    };
+
+    const env = buildEnv(configWithOverride, "claude", "cold");
+    expect(env.CLAUDE_CODE_EFFORT_LEVEL).toBeUndefined();
+  });
+
   it("appends [1m] to claude model name when context >= 1M", () => {
     const config1m: MswConfig = {
       version: 1,

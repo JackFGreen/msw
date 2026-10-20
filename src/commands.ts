@@ -97,7 +97,13 @@ export async function switchAgent(
   paths: Paths,
   agent: Agent,
   provider: string,
-  options: { model?: string; haiku?: boolean; sonnet?: boolean; opus?: boolean }
+  options: {
+    model?: string;
+    effort?: string;
+    haiku?: boolean;
+    sonnet?: boolean;
+    opus?: boolean;
+  }
 ) {
   if (provider === "origin") {
     await restoreAgentOrigin(paths, agent);
@@ -124,7 +130,8 @@ export async function switchAgent(
     agent,
     provider,
     baseModel,
-    modelOverrides
+    modelOverrides,
+    options.effort
   );
   await saveConfig(paths.mswConfig, config);
 

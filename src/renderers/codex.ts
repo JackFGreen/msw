@@ -18,6 +18,11 @@ export async function switchCodex(paths: Paths, config: MswConfig) {
   const codex = await readTomlObject(paths.codexConfig);
   codex.model_provider = selection.id;
   codex.model = selection.model;
+  if (selection.effort) {
+    codex.model_reasoning_effort = selection.effort;
+  } else {
+    delete codex.model_reasoning_effort;
+  }
 
   const modelProviders = asObject(codex.model_providers);
   modelProviders[selection.id] = {

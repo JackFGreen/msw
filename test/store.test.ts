@@ -132,4 +132,37 @@ describe("store", () => {
     config = setActive(config, "claude", "cold");
     expect(config.active.claude?.modelOverrides).toBeUndefined();
   });
+
+  it("persists effort on same provider and clears when switching provider", () => {
+    const base = addProvider(
+      addProvider(
+        {
+          version: 1,
+          providers: {},
+          active: {},
+        },
+        {
+          id: "hot",
+          baseURL: "https://example.com/v1",
+          apiKey: "secret",
+          model: "gpt",
+        }
+      ),
+      {
+        id: "cold",
+        baseURL: "https://cold.example.com/v1",
+        apiKey: "secret",
+        model: "claude",
+      }
+    );
+
+    let config = setActive(base, "codex", "hot", undefined, undefined, "high");
+    expect(config.active.codex?.effort).toBe("high");
+
+    config = setActive(config, "codex", "hot", "gpt-mini");
+    expect(config.active.codex?.effort).toBe("high");
+
+    config = setActive(config, "codex", "cold");
+    expect(config.active.codex?.effort).toBeUndefined();
+  });
 });

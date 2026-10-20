@@ -5,6 +5,7 @@ export type EnvSelection = {
   id: string;
   provider: Provider;
   model: string;
+  effort?: string;
   modelOverrides?: ModelOverrides;
 };
 
@@ -56,6 +57,7 @@ export function buildEnvForSelection(
         ANTHROPIC_DEFAULT_SONNET_MODEL: sonnetModel,
         ANTHROPIC_DEFAULT_OPUS_MODEL: opusModel,
         ANTHROPIC_DEFAULT_HAIKU_MODEL: haikuModel,
+        ...(selection.effort && { CLAUDE_CODE_EFFORT_LEVEL: selection.effort }),
       };
     }
     case "codex":

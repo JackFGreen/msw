@@ -78,6 +78,7 @@ exec zsh
 | `ANTHROPIC_DEFAULT_SONNET_MODEL`      | claude   |
 | `ANTHROPIC_DEFAULT_OPUS_MODEL`        | claude   |
 | `ANTHROPIC_DEFAULT_HAIKU_MODEL`       | claude   |
+| `CLAUDE_CODE_EFFORT_LEVEL`            | claude   |
 | `MSW_CODEX_API_KEY`                   | codex    |
 | `MSW_OPENCODE_<PROVIDER_ID>_API_KEY`  | opencode |
 
@@ -175,6 +176,7 @@ msw edit <provider> [--name ...] [--api-key ...] [--base-url ... [--claude]] [--
 msw delete <id> [--force]        # 删除 provider
 msw switch <agent> <provider>    # 切换 agent 的 provider
 msw switch <agent> <provider> --model <model>  # 临时指定模型
+msw switch <agent> <provider> --effort <effort>  # 设置推理强度
 msw switch claude <provider> --model <model> --haiku   # 覆盖 haiku 槽位
 msw switch claude <provider> --model <model> --sonnet  # 覆盖 sonnet 槽位
 msw switch claude <provider> --model <model> --opus    # 覆盖 opus 槽位
@@ -225,6 +227,7 @@ Claude Code：
 - `msw switch claude <provider>` 更新 `~/.msw/config.jsonc` 的 `active.claude`。
 - 同时清理 `~/.claude/settings.json` 中 `env` 字段的 `ANTHROPIC_*`，避免 settings 覆盖 shell env。
 - Claude Code 不支持在 `settings.json` 的 `env` 中展开 `$VAR`，所以运行时变量由 `msw env claude` 直接导出。
+- effort 通过 `CLAUDE_CODE_EFFORT_LEVEL` 导出，可用值为 `low`、`medium`、`high`、`xhigh`、`max`、`auto`（具体取决于模型）。
 
 #### Claude 模型覆盖
 
@@ -255,13 +258,14 @@ Codex：
 
 - `msw switch codex <provider>` 更新 `~/.codex/config.toml`。
 - 写入 `model_provider`、`model` 和 `[model_providers.<id>]`。
+- 指定 `--effort` 时写入 `model_reasoning_effort`；未指定时移除该字段。
 - 写入 `env_key = "MSW_CODEX_API_KEY"`，不写 API key 明文。
 
 OpenCode（v2）：
 
 - `msw sync opencode` 把 `~/.msw/config.jsonc` 中所有 provider 同步到 `~/.config/opencode/opencode.json` 的 `providers`。
 - provider 使用 `package: "@opencode/ai/providers/openai-compatible"`，地址和 key 写入 `settings.baseURL` / `settings.apiKey`。
-- `msw switch opencode <provider>` 只更新 OpenCode 当前 active model，例如 `"model": "openrouter/openai/gpt-4o"`。
+- `msw switch opencode <provider>` 只更新 OpenCode 当前 active model，例如 `"model": "openrouter/openai/gpt-4o"`；指定 `--effort` 时直接把 effort 作为 variant id 追加，例如 `"model": "openrouter/openai/gpt-4o#high"`。
 - provider key 使用 `{env:MSW_OPENCODE_<PROVIDER_ID>_API_KEY}`。
 - 模型配置会转换为 OpenCode v2 结构：`modalities` → `capabilities`，`variants` → `[{ id, settings }]`。
 - 当前只适配 OpenCode v2；`msw sync opencode` 会删除 v1 残留的顶层 `provider` 配置。

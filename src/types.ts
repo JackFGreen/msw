@@ -36,6 +36,7 @@ export type ModelOverrides = {
 export type ActiveSelection = {
   provider: string;
   model: string;
+  effort?: string;
   modelOverrides?: ModelOverrides;
 };
 
