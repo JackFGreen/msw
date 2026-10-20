@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.0.0](https://github.com/JackFGreen/msw/compare/v0.5.0...v1.0.0) (2026-10-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* migrate OpenCode sync to v2 provider config
+
+### Features
+
+* add reasoning effort switching ([7ace8ad](https://github.com/JackFGreen/msw/commit/7ace8adc90da5a1c9f05be495ecaeed984ae2a82))
+* migrate OpenCode sync to v2 provider config ([bd2eb2f](https://github.com/JackFGreen/msw/commit/bd2eb2fc26ad8deabc31ba5da1d68733729cab94))
+* support removing provider models ([1979f3c](https://github.com/JackFGreen/msw/commit/1979f3c4a50d87ca6710befda7e534f51e626955))
+* wrap multi-value columns in list output ([52de381](https://github.com/JackFGreen/msw/commit/52de3819be8b0baf98870ac7ea2ebe7ca0191a00))
+
+
+### Bug Fixes
+
+* render opencode v2 model config and drop legacy provider ([97b07a9](https://github.com/JackFGreen/msw/commit/97b07a984678ac1695f883c0ea96a35c3e753ecf))
+* validate effort against configured variants ([b98800d](https://github.com/JackFGreen/msw/commit/b98800d076dbd12552e2fc707021f18ff0f3bab3))
+
 ## [0.5.0](https://github.com/JackFGreen/msw/compare/v0.4.0...v0.5.0) (2026-10-19)
 
 
