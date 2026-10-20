@@ -22,8 +22,8 @@ export async function listProviders(paths: Paths) {
     name: provider.name,
     baseURL: provider.baseURL ?? "",
     defaultModel: provider.defaultModel,
-    models: Object.keys(provider.models).join(", "),
-    active: activeAgents(config, id).join(", "),
+    models: Object.keys(provider.models).join("\n"),
+    active: activeAgents(config, id).join("\n"),
   }));
 
   if (rows.length === 0) {
@@ -205,18 +205,20 @@ function activeAgents(config: MswConfig, providerId: string) {
 }
 
 function table(rows: Array<Record<string, string>>, columns: string[]) {
-  const widths = Object.fromEntries(
-    columns.map((column) => [
-      column,
-      Math.max(column.length, ...rows.map((row) => String(row[column] ?? "").length)),
-    ])
+  const cells = rows.map((row) => columns.map((column) => String(row[column] ?? "").split("\n")));
+  const widths = columns.map((column, index) =>
+    Math.max(column.length, ...cells.flatMap((row) => row[index].map((line) => line.length)))
   );
 
-  const formatRow = (row: Record<string, string>) =>
-    columns.map((column) => String(row[column] ?? "").padEnd(widths[column])).join("  ");
+  const formatRow = (values: string[][]) => {
+    const height = Math.max(...values.map((lines) => lines.length));
+    return Array.from({ length: height }, (_, line) =>
+      values
+        .map((lines, index) => (lines[line] ?? "").padEnd(widths[index]))
+        .join("  ")
+        .trimEnd()
+    );
+  };
 
-  return [
-    formatRow(Object.fromEntries(columns.map((column) => [column, column]))),
-    ...rows.map(formatRow),
-  ].join("\n");
+  return [...formatRow(columns.map((column) => [column])), ...cells.flatMap(formatRow)].join("\n");
 }
