@@ -263,7 +263,8 @@ OpenCode（v2）：
 - provider 使用 `package: "@opencode/ai/providers/openai-compatible"`，地址和 key 写入 `settings.baseURL` / `settings.apiKey`。
 - `msw switch opencode <provider>` 只更新 OpenCode 当前 active model，例如 `"model": "openrouter/openai/gpt-4o"`。
 - provider key 使用 `{env:MSW_OPENCODE_<PROVIDER_ID>_API_KEY}`。
-- 当前只适配 OpenCode v2；v1 的单数 `provider` / `npm` / `options` 结构不会再写入。
+- 模型配置会转换为 OpenCode v2 结构：`modalities` → `capabilities`，`variants` → `[{ id, settings }]`。
+- 当前只适配 OpenCode v2；`msw sync opencode` 会删除 v1 残留的顶层 `provider` 配置。
 
 ## 恢复原始配置
 

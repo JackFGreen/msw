@@ -102,6 +102,13 @@ describe("renderers", () => {
             },
           },
         },
+        provider: {
+          legacy: {
+            models: {
+              stale: { name: "stale" },
+            },
+          },
+        },
       })
     );
 
@@ -109,11 +116,13 @@ describe("renderers", () => {
 
     const raw = await fs.readFile(paths.opencodeConfig, "utf8");
     const parsed = parseJson(raw) as unknown as {
+      provider?: unknown;
       providers: Record<
         string,
         { settings: { apiKey: string }; models: Record<string, { name: string }> }
       >;
     };
+    expect(parsed.provider).toBeUndefined();
     expect(Object.keys(parsed.providers).sort()).toEqual([
       "cold",
       "external",
@@ -146,6 +155,61 @@ describe("renderers", () => {
     );
     expect(parsed.providers["moonshotai-cn"].settings.baseURL).toBe("https://api.moonshot.cn/v1");
     expect(raw).not.toContain("kimi-secret");
+  });
+
+  it("renders opencode v2 model capabilities and variants", async () => {
+    const paths = await tempPaths();
+    await fs.mkdir(path.dirname(paths.opencodeConfig), { recursive: true });
+    await fs.writeFile(paths.opencodeConfig, JSON.stringify({ providers: {} }));
+
+    await syncOpenCode(paths, {
+      version: 1,
+      providers: {
+        hot: {
+          name: "Hot",
+          baseURL: "https://hot.example/v1",
+          apiKey: "hot-secret",
+          defaultModel: "gpt-hot",
+          models: {
+            "gpt-hot": {
+              name: "gpt-hot",
+              limit: { context: 1048576, output: 131072 },
+              modalities: { input: ["text"], output: ["text"] },
+              variants: {
+                low: { options: { reasoningEffort: "low" } },
+                high: { options: { reasoningEffort: "high" } },
+              },
+            },
+          },
+        },
+      },
+      active: {},
+    });
+
+    const parsed = parseJson(await fs.readFile(paths.opencodeConfig, "utf8")) as unknown as {
+      providers: Record<
+        string,
+        {
+          models: Record<
+            string,
+            {
+              limit: { context: number; output: number };
+              capabilities: { input: string[]; output: string[] };
+              variants: Array<{ id: string; settings: Record<string, unknown> }>;
+              modalities?: unknown;
+            }
+          >;
+        }
+      >;
+    };
+    const model = parsed.providers.hot.models["gpt-hot"];
+    expect(model.limit).toEqual({ context: 1048576, output: 131072 });
+    expect(model.capabilities).toEqual({ input: ["text"], output: ["text"] });
+    expect(model.variants).toEqual([
+      { id: "low", settings: { reasoningEffort: "low" } },
+      { id: "high", settings: { reasoningEffort: "high" } },
+    ]);
+    expect(model.modalities).toBeUndefined();
   });
 
   it("switches opencode active model separately from sync", async () => {

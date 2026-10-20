@@ -3,7 +3,7 @@ import { baseURLForAgent, opencodeApiKeyEnvName } from "../env.js";
 import { MswError } from "../errors.js";
 import type { Paths } from "../paths.js";
 import { requireActive } from "../store.js";
-import type { MswConfig, Provider } from "../types.js";
+import type { ModelConfig, MswConfig, Provider } from "../types.js";
 import { asObject, readJsonObject, writeJsonObject } from "./common.js";
 
 const openaiCompatiblePackage = "@opencode/ai/providers/openai-compatible";
@@ -12,6 +12,7 @@ export async function syncOpenCode(paths: Paths, config: MswConfig) {
   await backupFile(paths.opencodeConfig, paths.backupDir, "opencode");
   const opencode = await readJsonObject(paths.opencodeConfig);
   const existingProviders = asObject(opencode.providers);
+  delete opencode.provider;
 
   opencode.providers = {
     ...existingProviders,
@@ -50,6 +51,27 @@ function renderProvider(id: string, provider: Provider) {
       baseURL: baseURLForAgent({ id, provider, model: provider.defaultModel }, "opencode"),
       apiKey: `{env:${opencodeApiKeyEnvName(id)}}`,
     },
-    models: provider.models,
+    models: Object.fromEntries(
+      Object.entries(provider.models).map(([modelId, model]) => [modelId, renderModel(model)])
+    ),
+  };
+}
+
+function renderModel(model: ModelConfig) {
+  return {
+    name: model.name,
+    ...(model.limit && { limit: model.limit }),
+    ...(model.modalities && {
+      capabilities: {
+        ...(model.modalities.input && { input: model.modalities.input }),
+        ...(model.modalities.output && { output: model.modalities.output }),
+      },
+    }),
+    ...(model.variants && {
+      variants: Object.entries(model.variants).map(([id, variant]) => ({
+        id,
+        ...(variant.options && { settings: variant.options }),
+      })),
+    }),
   };
 }
