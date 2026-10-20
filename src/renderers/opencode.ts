@@ -6,12 +6,14 @@ import { requireActive } from "../store.js";
 import type { MswConfig, Provider } from "../types.js";
 import { asObject, readJsonObject, writeJsonObject } from "./common.js";
 
+const openaiCompatiblePackage = "@opencode/ai/providers/openai-compatible";
+
 export async function syncOpenCode(paths: Paths, config: MswConfig) {
   await backupFile(paths.opencodeConfig, paths.backupDir, "opencode");
   const opencode = await readJsonObject(paths.opencodeConfig);
-  const existingProviders = asObject(opencode.provider);
+  const existingProviders = asObject(opencode.providers);
 
-  opencode.provider = {
+  opencode.providers = {
     ...existingProviders,
     ...Object.fromEntries(
       Object.entries(config.providers).map(([id, provider]) => [id, renderProvider(id, provider)])
@@ -31,7 +33,7 @@ export async function switchOpenCode(paths: Paths, config: MswConfig) {
   await backupFile(paths.opencodeConfig, paths.backupDir, "opencode");
   const opencode = await readJsonObject(paths.opencodeConfig);
 
-  const providers = asObject(opencode.provider);
+  const providers = asObject(opencode.providers);
   if (!providers[selection.id]) {
     throw new MswError(`opencode provider ${selection.id} is not synced; run msw sync opencode`);
   }
@@ -43,8 +45,8 @@ export async function switchOpenCode(paths: Paths, config: MswConfig) {
 function renderProvider(id: string, provider: Provider) {
   return {
     name: provider.name,
-    npm: "@ai-sdk/openai-compatible",
-    options: {
+    package: openaiCompatiblePackage,
+    settings: {
       baseURL: baseURLForAgent({ id, provider, model: provider.defaultModel }, "opencode"),
       apiKey: `{env:${opencodeApiKeyEnvName(id)}}`,
     },

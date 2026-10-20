@@ -95,9 +95,9 @@ describe("renderers", () => {
       paths.opencodeConfig,
       JSON.stringify({
         instructions: ["README.md"],
-        provider: {
+        providers: {
           external: {
-            options: {
+            settings: {
               apiKey: "external",
             },
           },
@@ -109,20 +109,20 @@ describe("renderers", () => {
 
     const raw = await fs.readFile(paths.opencodeConfig, "utf8");
     const parsed = parseJson(raw) as unknown as {
-      provider: Record<
+      providers: Record<
         string,
-        { options: { apiKey: string }; models: Record<string, { name: string }> }
+        { settings: { apiKey: string }; models: Record<string, { name: string }> }
       >;
     };
-    expect(Object.keys(parsed.provider).sort()).toEqual([
+    expect(Object.keys(parsed.providers).sort()).toEqual([
       "cold",
       "external",
       "hot",
       "moonshotai-cn",
     ]);
-    expect(parsed.provider.external.options.apiKey).toBe("external");
-    expect(parsed.provider.hot.options.apiKey).toBe("{env:MSW_OPENCODE_HOT_API_KEY}");
-    expect(parsed.provider.cold.models["gpt-cold"].name).toBe("gpt-cold");
+    expect(parsed.providers.external.settings.apiKey).toBe("external");
+    expect(parsed.providers.hot.settings.apiKey).toBe("{env:MSW_OPENCODE_HOT_API_KEY}");
+    expect(parsed.providers.cold.models["gpt-cold"].name).toBe("gpt-cold");
     expect(raw).not.toContain("hot-secret");
     expect(raw).not.toContain("cold-secret");
   });
@@ -130,19 +130,21 @@ describe("renderers", () => {
   it("syncs kimi as an openai-compatible provider", async () => {
     const paths = await tempPaths();
     await fs.mkdir(path.dirname(paths.opencodeConfig), { recursive: true });
-    await fs.writeFile(paths.opencodeConfig, JSON.stringify({ provider: {} }));
+    await fs.writeFile(paths.opencodeConfig, JSON.stringify({ providers: {} }));
 
     await syncOpenCode(paths, config);
 
     const raw = await fs.readFile(paths.opencodeConfig, "utf8");
     const parsed = parseJson(raw) as unknown as {
-      provider: Record<string, { npm: string; options: { apiKey: string; baseURL: string } }>;
+      providers: Record<string, { package: string; settings: { apiKey: string; baseURL: string } }>;
     };
-    expect(parsed.provider["moonshotai-cn"].options.apiKey).toBe(
+    expect(parsed.providers["moonshotai-cn"].settings.apiKey).toBe(
       "{env:MSW_OPENCODE_MOONSHOTAI_CN_API_KEY}"
     );
-    expect(parsed.provider["moonshotai-cn"].npm).toBe("@ai-sdk/openai-compatible");
-    expect(parsed.provider["moonshotai-cn"].options.baseURL).toBe("https://api.moonshot.cn/v1");
+    expect(parsed.providers["moonshotai-cn"].package).toBe(
+      "@opencode/ai/providers/openai-compatible"
+    );
+    expect(parsed.providers["moonshotai-cn"].settings.baseURL).toBe("https://api.moonshot.cn/v1");
     expect(raw).not.toContain("kimi-secret");
   });
 
@@ -152,9 +154,9 @@ describe("renderers", () => {
     await fs.writeFile(
       paths.opencodeConfig,
       JSON.stringify({
-        provider: {
+        providers: {
           cold: {
-            options: {},
+            settings: {},
           },
         },
       })

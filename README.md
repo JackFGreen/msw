@@ -257,11 +257,13 @@ Codex：
 - 写入 `model_provider`、`model` 和 `[model_providers.<id>]`。
 - 写入 `env_key = "MSW_CODEX_API_KEY"`，不写 API key 明文。
 
-OpenCode：
+OpenCode（v2）：
 
-- `msw sync opencode` 把 `~/.msw/config.jsonc` 中所有 provider 同步到 `~/.config/opencode/opencode.json`。
+- `msw sync opencode` 把 `~/.msw/config.jsonc` 中所有 provider 同步到 `~/.config/opencode/opencode.json` 的 `providers`。
+- provider 使用 `package: "@opencode/ai/providers/openai-compatible"`，地址和 key 写入 `settings.baseURL` / `settings.apiKey`。
 - `msw switch opencode <provider>` 只更新 OpenCode 当前 active model，例如 `"model": "openrouter/openai/gpt-4o"`。
 - provider key 使用 `{env:MSW_OPENCODE_<PROVIDER_ID>_API_KEY}`。
+- 当前只适配 OpenCode v2；v1 的单数 `provider` / `npm` / `options` 结构不会再写入。
 
 ## 恢复原始配置
 
