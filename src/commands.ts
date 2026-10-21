@@ -2,7 +2,7 @@ import { MswError } from "./errors.js";
 import { restoreOriginBackup } from "./backup.js";
 import type { Paths } from "./paths.js";
 import { switchClaude } from "./renderers/claude.js";
-import { switchCodex } from "./renderers/codex.js";
+import { restoreCodexOrigin, switchCodex } from "./renderers/codex.js";
 import { syncOpenCode, switchOpenCode } from "./renderers/opencode.js";
 import {
   addProvider,
@@ -106,8 +106,15 @@ export async function switchAgent(
   }
 ) {
   if (provider === "origin") {
-    await restoreAgentOrigin(paths, agent);
     const config = await loadConfig(paths.mswConfig);
+    const selection = config.active[agent];
+
+    if (agent === "codex") {
+      await restoreCodexOrigin(paths, selection);
+    } else {
+      await restoreAgentOrigin(paths, agent);
+    }
+
     const active = { ...config.active };
     delete active[agent];
     await saveConfig(paths.mswConfig, { ...config, active });

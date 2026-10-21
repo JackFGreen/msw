@@ -262,6 +262,7 @@ Codex：
 - 写入 `model_provider`、`model` 和 `[model_providers.<id>]`。
 - 指定 `--effort` 时写入 `model_reasoning_effort`；未指定时移除该字段。
 - 写入 `env_key = "MSW_CODEX_API_KEY"`，不写 API key 明文。
+- `msw switch codex origin` 采用字段级撤销，见下方「恢复原始配置」。
 
 OpenCode（v2）：
 
@@ -274,7 +275,7 @@ OpenCode（v2）：
 
 ## 恢复原始配置
 
-恢复某个 agent 到第一次被 `msw` 修改前的配置：
+撤销某个 agent 上 `msw` 的改动：
 
 ```sh
 msw switch codex origin
@@ -284,7 +285,22 @@ msw switch opencode origin
 
 恢复后，`msw` 会清理 `~/.msw/config.jsonc` 中对应的 `active.<agent>`。
 
-恢复查找顺序：
+Codex 采用**字段级撤销**：在当前 `~/.codex/config.toml` 上移除 `msw` 写入的字段，而不是整文件回滚。`config.toml` 的其余部分由 Codex 应用自己维护（`projects`、`plugins`、`tui`、`mcp_servers`、`desktop` 等），且在快照之后仍在变化，整文件回滚会把这些新字段一并抹掉。
+
+具体移除规则：
+
+| 字段 | 判定依据 |
+| --- | --- |
+| `model_provider` | 它指向的 `[model_providers.<id>]` 表中 `env_key` 为 `MSW_CODEX_API_KEY` |
+| `model` | 与 `active.codex.model` 记录一致 |
+| `model_reasoning_effort` | 与 `active.codex.effort` 记录一致 |
+| `[model_providers.<id>]` | 表中 `env_key` 为 `MSW_CODEX_API_KEY`（所有 msw 写入的表，无论是否被指向） |
+
+`model_provider` 与 provider 表靠 `MSW_CODEX_API_KEY` 标记识别，因此 `active.codex` 已被清空时仍能正常工作；`model` 与 `model_reasoning_effort` 只在与记录一致时才移除，所以在 Codex 里另外选择的模型不会被误删。移除 `model` 后 Codex 回落到服务端默认模型。
+
+没有可移除的字段时命令静默成功，可重复执行。`[model_providers.<id>]` 表在撤销后不会被删除，下次 `msw switch codex <provider>` 可直接复用。
+
+Claude 与 OpenCode 仍使用固定 bak 整文件回滚，查找顺序：
 
 1. 优先使用 agent 配置同目录下的固定 bak 文件。
 2. 如果同目录 bak 不存在，再使用 `~/.msw/backups/<agent>/` 下的固定 bak 文件。
@@ -292,14 +308,14 @@ msw switch opencode origin
 固定 bak 路径：
 
 ```text
-~/.codex/config.msw-bak.toml
-~/.msw/backups/codex/config.msw-bak.toml
-
 ~/.claude/settings.msw-bak.json
 ~/.msw/backups/claude/settings.msw-bak.json
 
 ~/.config/opencode/opencode.msw-bak.json
 ~/.msw/backups/opencode/opencode.msw-bak.json
+
+~/.codex/config.msw-bak.toml            # 不再被 origin 使用，仅作历史快照
+~/.msw/backups/codex/config.msw-bak.toml
 ```
 
 第一次修改某个 agent 配置前，`msw` 会按上面的路径保存原始配置。后续普通备份仍会写入带时间戳的文件，但不会覆盖固定 bak。
