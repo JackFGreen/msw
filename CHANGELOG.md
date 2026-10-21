@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/JackFGreen/msw/compare/v1.0.0...v1.0.1) (2026-10-21)
+
+
+### Bug Fixes
+
+* restore codex origin by undoing msw fields instead of rolling back the file ([d438357](https://github.com/JackFGreen/msw/commit/d438357e71b1f339f58b5ce25ed5dbb62a52dfb9))
+
 ## [1.0.0](https://github.com/JackFGreen/msw/compare/v0.5.0...v1.0.0) (2026-10-20)
 
 
